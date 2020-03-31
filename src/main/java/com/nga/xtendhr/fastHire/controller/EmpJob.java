@@ -97,6 +97,9 @@ public class EmpJob {
 	private String standardHours = null;
 	private String parentCode = null;
 	private String managerId = null;
+	private String payScaleArea = null;
+	private String payScaleType = null;
+	private String jobTitle = null;
 
 	private static String datePattern = "dd/MM/yyyy";
 
@@ -362,7 +365,14 @@ public class EmpJob {
 //						logger.error(paramEmpName.toString());
 //						logger.error(paramEmpValue.toString());
 
+					} else if (name.toLowerCase().equals("payscalearea")) {
+						payScaleArea = field.getValue().toString();
+					} else if (name.toLowerCase().equals("payscaletype")) {
+						payScaleType = field.getValue().toString();
+					} else if (name.toLowerCase().equals("jobtitle")) {
+						jobTitle = field.getValue().toString();
 					}
+
 				}
 			}
 
@@ -394,18 +404,22 @@ public class EmpJob {
 		obj.put("payGrade", payGrade);
 		obj.put(paramPositionName, paramPositionValue);
 		obj.put("location", location);
-		obj.put(paramEmpName, paramEmpValue);
+//		obj.put(paramEmpName, paramEmpValue);
 		obj.put("department", deparment);
 		obj.put("division", division);
-		obj.put(paramHolCodeName, paramHolNameValue);
-		obj.put(paramTimeTypeName, paramTimeTypeValue);
-		obj.put(paramWorkSchName, paramWorkSchValue);
+//		obj.put(paramHolCodeName, paramHolNameValue);
+//		obj.put(paramTimeTypeName, paramTimeTypeValue);
+//		obj.put(paramWorkSchName, paramWorkSchValue);
 		obj.put("standardHours", standardHours);
 		obj.put("managerId", managerId);
-		obj.put(paramContractEDateName, paramContractEDateValue);
-		obj.put(paramcontractTypeName, paramcontractTypeValue);
+//		obj.put(paramContractEDateName, paramContractEDateValue);
+//		obj.put(paramcontractTypeName, paramcontractTypeValue);
 		obj.put(paramFirmSubCategoryName, paramFirmSubCategoryValue);
 		obj.put(ConstantManager.customDateName, customDateValue);
+
+		obj.put("payScaleArea", payScaleArea);
+		obj.put("payScaleType", payScaleType);
+		obj.put("jobTitle", jobTitle);
 		logger.error("EmpbjobPost:" + obj.toJSONString());
 		return obj.toJSONString();
 	}

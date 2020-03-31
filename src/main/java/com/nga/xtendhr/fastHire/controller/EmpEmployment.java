@@ -42,11 +42,15 @@ public class EmpEmployment {
 	private String paramValue = null;
 	private final String sDate = "startdate";
 
+	private String startDate = null;
+	private String firstDateWorked = null;
+
 	@PostMapping(value = ConstantManager.empEmployment, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public String empEmployment(@RequestBody String request, HttpServletRequest requestForSession)
 			throws ParseException {
 		try {
 			// Extract the params and their values
+
 			parseRequest(request);
 
 			URLManager genURL = new URLManager(getClass().getSimpleName(), configName);
@@ -91,7 +95,11 @@ public class EmpEmployment {
 
 //						logger.error(paramName.toString());
 //						logger.error(paramValue.toString());
-						break;
+
+					} else if (techName.toLowerCase().equals("startdate")) {
+						startDate = field.getValue().toString();
+					} else if (techName.toLowerCase().equals("firstdateworked")) {
+						firstDateWorked = field.getValue().toString();
 					}
 				}
 			}
@@ -118,9 +126,10 @@ public class EmpEmployment {
 		JSONObject jsonObj = new JSONObject();
 		jsonObj.put("uri", "EmpEmployment(personIdExternal='" + userID + "',userId='" + userID + "')");
 		obj.put("__metadata", jsonObj);
-		obj.put(paramName, dateFormatted(sdf.format(now.getTime())));
+		obj.put(paramName, dateFormatted(startDate));
 		obj.put("personIdExternal", userID);
 		obj.put("userId", userID);
+		obj.put("firstDateWorked", dateFormatted(firstDateWorked));
 //		logger.error(obj.toJSONString());
 		return obj.toJSONString();
 	}

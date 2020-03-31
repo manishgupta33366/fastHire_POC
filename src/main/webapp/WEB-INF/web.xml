@@ -1,74 +1,91 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns="http://java.sun.com/xml/ns/javaee"
-	xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_3_1.xsd"
-	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_1.xsd"
-	id="WebApp_ID" version="3.1">
+	xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	id="WebApp_ID" version="2.5">
 
-	<login-config>
-		<auth-method>FORM</auth-method>
-	</login-config>
-
-	<resource-ref><!-- Required for com.sap.core.connectivity.api.configuration.ConnectivityConfiguration -->
-		<res-ref-name>connectivityConfiguration</res-ref-name>
-		<res-type>com.sap.core.connectivity.api.configuration.ConnectivityConfiguration
-		</res-type>
+	<!-- Declare the JNDI lookup of the default data source -->
+	<resource-ref>
+		<res-ref-name>jdbc/DefaultDB</res-ref-name>
+		<res-type>javax.sql.DataSource</res-type>
 	</resource-ref>
+	<resource-ref>
+		<res-ref-name>EcmService</res-ref-name>
+		<res-type>com.sap.ecm.api.EcmService</res-type>
+	</resource-ref>
+	<resource-ref>
+		<res-ref-name>connectivityConfiguration</res-ref-name>
+		<res-type>com.sap.core.connectivity.api.configuration.ConnectivityConfiguration</res-type>
+	</resource-ref>
+	<resource-ref>
+		<res-ref-name>TenantContext</res-ref-name>
+		<res-type>com.sap.cloud.account.TenantContext</res-type>
+	</resource-ref>
+
+	<resource-ref>
+		<res-ref-name>user/Provider</res-ref-name>
+		<res-type>com.sap.security.um.user.UserProvider</res-type>
+	</resource-ref>
+
 	<resource-ref>
 		<res-ref-name>myAuthHeaderProvider</res-ref-name>
 		<res-type>com.sap.core.connectivity.api.authentication.AuthenticationHeaderProvider</res-type>
 	</resource-ref>
 	<resource-ref><!-- Required for com.sap.core.connectivity.api.authentication.AuthenticationHeaderProvider -->
 		<res-ref-name>authProvider</res-ref-name>
-		<res-type>com.sap.core.connectivity.api.authentication.AuthenticationHeaderProvider
-		</res-type>
+		<res-type>com.sap.core.connectivity.api.authentication.AuthenticationHeaderProvider</res-type>
 	</resource-ref>
-	<resource-ref><!-- Declare the JNDI lookup of the default data source -->
-		<res-ref-name>jdbc/DefaultDB</res-ref-name>
-		<res-type>javax.sql.DataSource</res-type>
-	</resource-ref>
-	<session-config>
-		<session-timeout>20</session-timeout><!-- Setting Session Timeout to 20 
-			minutes -->
-		<!-- We can manually set the limit for a specific session by using HttpSession 
-			session = request.getSession(true); //true to create new session session.setMaxInactiveInterval(20*60); -->
-	</session-config>
-
-	<security-role>
-		<role-name>Everyone</role-name>
-	</security-role>
-	<security-role>
-		<role-name>StandardUser</role-name>
-	</security-role>
-	<security-role>
-		<role-name>Administrator</role-name>
-	</security-role>
-
 	<security-constraint>
 		<web-resource-collection>
-			<web-resource-name></web-resource-name>
-			<url-pattern>/Administrator/*</url-pattern>
-		</web-resource-collection>
-		<auth-constraint>
-			<role-name>Administrator</role-name>
-		</auth-constraint>
-	</security-constraint>
-	<security-constraint>
-		<web-resource-collection>
-			<web-resource-name>Standard normal user Services</web-resource-name>
-			<url-pattern>/StandardUser/*</url-pattern>
-		</web-resource-collection>
-		<auth-constraint>
-			<role-name>StandardUser</role-name>
-		</auth-constraint>
-	</security-constraint>
-	<security-constraint>
-		<web-resource-collection>
-			<web-resource-name>All SAP Cloud Platform users</web-resource-name>
+			<web-resource-name>All Services</web-resource-name>
 			<url-pattern>/*</url-pattern>
 		</web-resource-collection>
 		<auth-constraint>
 			<role-name>Everyone</role-name>
 		</auth-constraint>
 	</security-constraint>
+	<security-constraint>
+		<web-resource-collection>
+			<web-resource-name>Manager App Services</web-resource-name>
+			<url-pattern>/PreHireManager/*</url-pattern>
+		</web-resource-collection>
+		<auth-constraint>
+			<role-name>Manager</role-name>
+		</auth-constraint>
+	</security-constraint>
+	<security-constraint>
+		<web-resource-collection>
+			<web-resource-name>Manager App Services</web-resource-name>
+			<url-pattern>/api/SF/*</url-pattern>
+		</web-resource-collection>
+		<auth-constraint>
+			<role-name>Manager</role-name>
+		</auth-constraint>
+	</security-constraint>
+	<security-constraint>
+		<web-resource-collection>
+			<web-resource-name>Cloud Admin App Services</web-resource-name>
+			<url-pattern>/FastHireAdmin/*</url-pattern>
+		</web-resource-collection>
+		<auth-constraint>
+			<role-name>AmrestAccountAdmin</role-name>
+		</auth-constraint>
+	</security-constraint>
+	<security-role>
+		<description>All Users</description>
+		<role-name>Everyone</role-name>
+	</security-role>
+	<security-role>
+		<description>Manager</description>
+		<role-name>Manager</role-name>
+	</security-role>
+	<security-role>
+		<description>Amrest Account Admin</description>
+		<role-name>AmrestAccountAdmin</role-name>
+	</security-role>
+	<login-config>
+		<auth-method>FORM</auth-method>
+	</login-config>
+
 </web-app>

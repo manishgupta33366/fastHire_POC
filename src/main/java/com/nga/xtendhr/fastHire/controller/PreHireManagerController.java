@@ -174,26 +174,31 @@ public class PreHireManagerController {
 	@GetMapping(value = "/UserDetails")
 	public ResponseEntity<?> getUserDetails(HttpServletRequest request)
 			throws NamingException, ClientProtocolException, IOException, URISyntaxException {
-		String loggedInUser = request.getUserPrincipal().getName();
-		if (loggedInUser.equalsIgnoreCase("S0018810731") || loggedInUser.equalsIgnoreCase("S0018269301")
-				|| loggedInUser.equalsIgnoreCase("S0018810731") || loggedInUser.equalsIgnoreCase("S0019013022")) {
-			loggedInUser = "sfadmin";
+		try {
+			String loggedInUser = request.getUserPrincipal().getName();
+			if (loggedInUser.equalsIgnoreCase("S0018810731") || loggedInUser.equalsIgnoreCase("S0018269301")
+					|| loggedInUser.equalsIgnoreCase("S0018810731") || loggedInUser.equalsIgnoreCase("S0019013022")) {
+				loggedInUser = "sfadmin";
+			}
+
+			DestinationClient destClient = new DestinationClient();
+			destClient.setDestName(destinationName);
+			destClient.setHeaderProvider();
+			destClient.setConfiguration();
+			destClient.setDestConfiguration();
+			destClient.setHeaders(destClient.getDestProperty("Authentication"));
+
+			// call to get local language of the logged in user
+			HttpResponse userResponse = destClient.callDestinationGET("/User", "?$filter=userId eq '" + loggedInUser
+					+ "'&$format=json&$select=userId,lastName,firstName,email,defaultLocale");
+			String userResponseJsonString = EntityUtils.toString(userResponse.getEntity(), "UTF-8");
+			JSONObject userResponseObject = new JSONObject(userResponseJsonString);
+			userResponseObject = userResponseObject.getJSONObject("d").getJSONArray("results").getJSONObject(0);
+			return ResponseEntity.ok().body(userResponseObject.toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
 		}
-
-		DestinationClient destClient = new DestinationClient();
-		destClient.setDestName(destinationName);
-		destClient.setHeaderProvider();
-		destClient.setConfiguration();
-		destClient.setDestConfiguration();
-		destClient.setHeaders(destClient.getDestProperty("Authentication"));
-
-		// call to get local language of the logged in user
-		HttpResponse userResponse = destClient.callDestinationGET("/User", "?$filter=userId eq '" + loggedInUser
-				+ "'&$format=json&$select=userId,lastName,firstName,email,defaultLocale");
-		String userResponseJsonString = EntityUtils.toString(userResponse.getEntity(), "UTF-8");
-		JSONObject userResponseObject = new JSONObject(userResponseJsonString);
-		userResponseObject = userResponseObject.getJSONObject("d").getJSONArray("results").getJSONObject(0);
-		return ResponseEntity.ok().body(userResponseObject.toString());
 	}
 
 	@GetMapping(value = "/DashBoardPositions")
@@ -459,639 +464,656 @@ public class PreHireManagerController {
 			@RequestParam(value = "businessUnit", required = false) String businessUnitId,
 			@RequestParam(value = "position", required = true) String position)
 			throws NamingException, ClientProtocolException, IOException, URISyntaxException {
-		HttpSession session = request.getSession(false);
-		String loggedInUser = request.getUserPrincipal().getName();
-		if (loggedInUser.equalsIgnoreCase("S0018810731") || loggedInUser.equalsIgnoreCase("S0018269301")
-				|| loggedInUser.equalsIgnoreCase("S0018810731") || loggedInUser.equalsIgnoreCase("S0019013022")) {
-			loggedInUser = "sfadmin";
-		}
-
-		Date today = new Date();
-		Template template = null;
-		JSONObject returnObject = new JSONObject();
-		JSONArray returnArray = new JSONArray();
-
-		Map<String, String> compareMap = new HashMap<String, String>();
-
-		compareMap.put("businessUnit", businessUnitId);
-		compareMap.put("position", position);
-
-		// make calls to get language and country
-
-		DestinationClient destClient = new DestinationClient();
-		destClient.setDestName(destinationName);
-		destClient.setHeaderProvider();
-		destClient.setConfiguration();
-		destClient.setDestConfiguration();
-		destClient.setHeaders(destClient.getDestProperty("Authentication"));
-
-		// call to get local language of the logged in user
-
-		HttpResponse userResponse = destClient.callDestinationGET("/User",
-				"?$filter=userId eq '" + loggedInUser + "'&$format=json&$select=defaultLocale");
-		String userResponseJsonString = EntityUtils.toString(userResponse.getEntity(), "UTF-8");
-		JSONObject userResponseObject = new JSONObject(userResponseJsonString);
-		userResponseObject = userResponseObject.getJSONObject("d").getJSONArray("results").getJSONObject(0);
-		compareMap.put("locale", userResponseObject.getString("defaultLocale"));
-		session.setAttribute("defaultLocale", userResponseObject.getString("defaultLocale"));
-		logger.debug(
-				"Set defaultLocale to session in PerHireManager: " + userResponseObject.getString("defaultLocale"));
-		HttpResponse empJobResponse = destClient.callDestinationGET("/EmpJob", "?$filter=userId eq '" + loggedInUser
-				+ "' &$format=json&$expand=positionNav,positionNav/companyNav&$select=position,positionNav/companyNav/country,positionNav/company,positionNav/department");
-		String empJobResponseJsonString = EntityUtils.toString(empJobResponse.getEntity(), "UTF-8");
-		JSONObject empJobResponseObject = new JSONObject(empJobResponseJsonString);
-		empJobResponseObject = empJobResponseObject.getJSONObject("d").getJSONArray("results").getJSONObject(0);
-
-		compareMap.put("company", empJobResponseObject.getJSONObject("positionNav").getString("company"));
-		compareMap.put("department", empJobResponseObject.getJSONObject("positionNav").getString("department"));
-		compareMap.put("country",
-				empJobResponseObject.getJSONObject("positionNav").getJSONObject("companyNav").getString("country"));
-
-		SFConstants employeeClassConstant = sfConstantsService.findById("employeeClassId");
-		SFConstants empStatusConstant = sfConstantsService.findById("emplStatusId");
-
-		HttpResponse positionResponse = destClient.callDestinationGET("/Position", "?$filter=code eq '" + position
-				+ "'&$format=json&$select=code,vacant,location,payGrade,jobCode,standardHours,externalName_localized");
-		String positionResponseJsonString = EntityUtils.toString(positionResponse.getEntity(), "UTF-8");
-		JSONObject positionResponseObject = new JSONObject(positionResponseJsonString);
-		positionResponseObject = positionResponseObject.getJSONObject("d").getJSONArray("results").getJSONObject(0);
-
-		returnObject.put("PositionDetails", positionResponseObject);
-
-		if (!positionResponseObject.getBoolean("vacant")) {
-			HttpResponse candidateResponse = destClient.callDestinationGET("/EmpJob",
-					"?$format=json&$filter=position eq '" + compareMap.get("position") + "' and employeeClass eq '"
-							+ employeeClassConstant.getValue() + "' and company eq '" + compareMap.get("company")
-							+ "' and department eq '" + compareMap.get("department") + "' and emplStatusNav/id ne '"
-							+ empStatusConstant.getValue()
-							+ "' and userNav/userId ne null &$expand=userNav &$select=userId,position,userNav/userId,userNav/username,userNav/defaultFullName,userNav/firstName,userNav/lastName");
-			String candidateResponseJsonString = EntityUtils.toString(candidateResponse.getEntity(), "UTF-8");
-			JSONObject candidateResponseObject = new JSONObject(candidateResponseJsonString);
-			JSONArray candidateResponseArray = candidateResponseObject.getJSONObject("d").getJSONArray("results");
-			candidateResponseObject = candidateResponseArray.getJSONObject(0);
-			compareMap.put("category", "CONFIRM");
-			compareMap.put("candidateId", candidateResponseObject.getString("userId"));
-			returnObject.put("CandidateDetails", candidateResponseObject.getJSONObject("userNav"));
-		} else {
-			compareMap.put("category", "INITIATE");
-			compareMap.put("candidateId", "");
-		}
-
-		// Get the Business Unit and Company Map
-		MapCountryBusinessUnit mapCountryBusinessUnit;
-		if (businessUnitId == null) {
-			List<MapCountryBusinessUnit> mapCountryBusinessUnitList = mapCountryBusinessUnitService
-					.findByCountry(compareMap.get("country"));
-			mapCountryBusinessUnit = mapCountryBusinessUnitList.get(0);
-		} else {
-			mapCountryBusinessUnit = mapCountryBusinessUnitService.findByCountryBusinessUnit(compareMap.get("country"),
-					businessUnitId);
-		}
-		// getting the template per BUnit and Country
-		List<MapCountryBusinessUnitTemplate> mapTemplateList = mapCountryBusinessUnitTemplateService
-				.findByCountryBusinessUnitId(mapCountryBusinessUnit.getId());
-
-		// getting valid template per category (Initiate or confirm)
-		for (MapCountryBusinessUnitTemplate mapTemplate : mapTemplateList) {
-
-			if (today.before(mapTemplate.getEndDate()) && today.after(mapTemplate.getStartDate())) {
-
-				if (mapTemplate.getTemplate().getCategory().equalsIgnoreCase(compareMap.get("category"))) {
-					template = mapTemplate.getTemplate();
-					break;
-				}
-
+		try {
+			HttpSession session = request.getSession(false);
+			String loggedInUser = request.getUserPrincipal().getName();
+			if (loggedInUser.equalsIgnoreCase("S0018810731") || loggedInUser.equalsIgnoreCase("S0018269301")
+					|| loggedInUser.equalsIgnoreCase("S0018810731") || loggedInUser.equalsIgnoreCase("S0019013022")) {
+				loggedInUser = "sfadmin";
 			}
-		}
 
-		if (template != null) {
-			// get all field groups for the template
-			List<MapTemplateFieldGroup> templateFieldGroups = mapTemplateFieldGroupService
-					.findByTemplate(template.getId());
-			if (templateFieldGroups.size() != 0) {
-				HashMap<String, String> responseMap = new HashMap<>();
-				Set<String> entities = new HashSet<String>();
+			Date today = new Date();
+			Template template = null;
+			JSONObject returnObject = new JSONObject();
+			JSONArray returnArray = new JSONArray();
 
-				// get the details of Position for CONFIRM Hire Template value
-				// setting
-				// logger.debug("get the details of Position for CONFIRM Hire
-				// Template value setting ");
-				if (compareMap.get("category").equalsIgnoreCase("CONFIRM")) {
+			Map<String, String> compareMap = new HashMap<String, String>();
 
-					// get all the fields Entity Names Distinct
-					for (MapTemplateFieldGroup fieldGroup : templateFieldGroups) {
-						List<MapTemplateFieldProperties> fieldProperties = mapTemplateFieldPropertiesService
-								.findByTemplateFieldGroup(fieldGroup.getId());
-						for (MapTemplateFieldProperties fieldProp : fieldProperties) {
-							if (fieldProp.getField().getEntityName() != null) {
-								entities.add(fieldProp.getField().getEntityName());
+			compareMap.put("businessUnit", businessUnitId);
+			compareMap.put("position", position);
+
+			// make calls to get language and country
+
+			DestinationClient destClient = new DestinationClient();
+			destClient.setDestName(destinationName);
+			destClient.setHeaderProvider();
+			destClient.setConfiguration();
+			destClient.setDestConfiguration();
+			destClient.setHeaders(destClient.getDestProperty("Authentication"));
+
+			// call to get local language of the logged in user
+
+			HttpResponse userResponse = destClient.callDestinationGET("/User",
+					"?$filter=userId eq '" + loggedInUser + "'&$format=json&$select=defaultLocale");
+			String userResponseJsonString = EntityUtils.toString(userResponse.getEntity(), "UTF-8");
+			JSONObject userResponseObject = new JSONObject(userResponseJsonString);
+			userResponseObject = userResponseObject.getJSONObject("d").getJSONArray("results").getJSONObject(0);
+			compareMap.put("locale", userResponseObject.getString("defaultLocale"));
+			session.setAttribute("defaultLocale", userResponseObject.getString("defaultLocale"));
+			logger.debug(
+					"Set defaultLocale to session in PerHireManager: " + userResponseObject.getString("defaultLocale"));
+			HttpResponse empJobResponse = destClient.callDestinationGET("/EmpJob", "?$filter=userId eq '" + loggedInUser
+					+ "' &$format=json&$expand=positionNav,positionNav/companyNav&$select=position,positionNav/companyNav/country,positionNav/company,positionNav/department");
+			String empJobResponseJsonString = EntityUtils.toString(empJobResponse.getEntity(), "UTF-8");
+			JSONObject empJobResponseObject = new JSONObject(empJobResponseJsonString);
+			empJobResponseObject = empJobResponseObject.getJSONObject("d").getJSONArray("results").getJSONObject(0);
+
+			compareMap.put("company", empJobResponseObject.getJSONObject("positionNav").getString("company"));
+			compareMap.put("department", empJobResponseObject.getJSONObject("positionNav").getString("department"));
+			compareMap.put("country",
+					empJobResponseObject.getJSONObject("positionNav").getJSONObject("companyNav").getString("country"));
+
+			SFConstants employeeClassConstant = sfConstantsService.findById("employeeClassId");
+			SFConstants empStatusConstant = sfConstantsService.findById("emplStatusId");
+
+			HttpResponse positionResponse = destClient.callDestinationGET("/Position", "?$filter=code eq '" + position
+					+ "'&$format=json&$select=code,vacant,location,payGrade,jobCode,standardHours,externalName_localized");
+			String positionResponseJsonString = EntityUtils.toString(positionResponse.getEntity(), "UTF-8");
+			JSONObject positionResponseObject = new JSONObject(positionResponseJsonString);
+			positionResponseObject = positionResponseObject.getJSONObject("d").getJSONArray("results").getJSONObject(0);
+
+			returnObject.put("PositionDetails", positionResponseObject);
+
+			if (!positionResponseObject.getBoolean("vacant")) {
+				HttpResponse candidateResponse = destClient.callDestinationGET("/EmpJob",
+						"?$format=json&$filter=position eq '" + compareMap.get("position") + "' and employeeClass eq '"
+								+ employeeClassConstant.getValue() + "' and company eq '" + compareMap.get("company")
+								+ "' and department eq '" + compareMap.get("department") + "' and emplStatusNav/id ne '"
+								+ empStatusConstant.getValue()
+								+ "' and userNav/userId ne null &$expand=userNav &$select=userId,position,userNav/userId,userNav/username,userNav/defaultFullName,userNav/firstName,userNav/lastName");
+				String candidateResponseJsonString = EntityUtils.toString(candidateResponse.getEntity(), "UTF-8");
+				JSONObject candidateResponseObject = new JSONObject(candidateResponseJsonString);
+				JSONArray candidateResponseArray = candidateResponseObject.getJSONObject("d").getJSONArray("results");
+				candidateResponseObject = candidateResponseArray.getJSONObject(0);
+				compareMap.put("category", "CONFIRM");
+				compareMap.put("candidateId", candidateResponseObject.getString("userId"));
+				returnObject.put("CandidateDetails", candidateResponseObject.getJSONObject("userNav"));
+			} else {
+				compareMap.put("category", "INITIATE");
+				compareMap.put("candidateId", "");
+			}
+
+			// Get the Business Unit and Company Map
+			MapCountryBusinessUnit mapCountryBusinessUnit;
+			if (businessUnitId == null) {
+				List<MapCountryBusinessUnit> mapCountryBusinessUnitList = mapCountryBusinessUnitService
+						.findByCountry(compareMap.get("country"));
+				mapCountryBusinessUnit = mapCountryBusinessUnitList.get(0);
+			} else {
+				mapCountryBusinessUnit = mapCountryBusinessUnitService
+						.findByCountryBusinessUnit(compareMap.get("country"), businessUnitId);
+			}
+			// getting the template per BUnit and Country
+			List<MapCountryBusinessUnitTemplate> mapTemplateList = mapCountryBusinessUnitTemplateService
+					.findByCountryBusinessUnitId(mapCountryBusinessUnit.getId());
+
+			// getting valid template per category (Initiate or confirm)
+			for (MapCountryBusinessUnitTemplate mapTemplate : mapTemplateList) {
+
+				if (today.before(mapTemplate.getEndDate()) && today.after(mapTemplate.getStartDate())) {
+
+					if (mapTemplate.getTemplate().getCategory().equalsIgnoreCase(compareMap.get("category"))) {
+						template = mapTemplate.getTemplate();
+						break;
+					}
+
+				}
+			}
+
+			if (template != null) {
+				// get all field groups for the template
+				List<MapTemplateFieldGroup> templateFieldGroups = mapTemplateFieldGroupService
+						.findByTemplate(template.getId());
+				if (templateFieldGroups.size() != 0) {
+					HashMap<String, String> responseMap = new HashMap<>();
+					Set<String> entities = new HashSet<String>();
+
+					// get the details of Position for CONFIRM Hire Template value
+					// setting
+					// logger.debug("get the details of Position for CONFIRM Hire
+					// Template value setting ");
+					if (compareMap.get("category").equalsIgnoreCase("CONFIRM")) {
+
+						// get all the fields Entity Names Distinct
+						for (MapTemplateFieldGroup fieldGroup : templateFieldGroups) {
+							List<MapTemplateFieldProperties> fieldProperties = mapTemplateFieldPropertiesService
+									.findByTemplateFieldGroup(fieldGroup.getId());
+							for (MapTemplateFieldProperties fieldProp : fieldProperties) {
+								if (fieldProp.getField().getEntityName() != null) {
+									entities.add(fieldProp.getField().getEntityName());
+								}
 							}
 						}
-					}
 
-					// call the entity urls which are independent like Empjob
-					// logger.debug("call the entity urls which are independent
-					// like Empjob ");
-					for (String entity : entities) {
+						// call the entity urls which are independent like Empjob
+						// logger.debug("call the entity urls which are independent
+						// like Empjob ");
+						for (String entity : entities) {
 
-						SFAPI sfApi = sfAPIService.findById(entity, "GET");
+							SFAPI sfApi = sfAPIService.findById(entity, "GET");
 
-						if (sfApi != null && sfApi.getTagSource().equalsIgnoreCase("UI")) {
+							if (sfApi != null && sfApi.getTagSource().equalsIgnoreCase("UI")) {
 
-							DestinationClient destClientPos = new DestinationClient();
-							destClientPos.setDestName(destinationName);
-							destClientPos.setHeaderProvider();
-							destClientPos.setConfiguration();
-							destClientPos.setDestConfiguration();
-							destClientPos.setHeaders(destClientPos.getDestProperty("Authentication"));
+								DestinationClient destClientPos = new DestinationClient();
+								destClientPos.setDestName(destinationName);
+								destClientPos.setHeaderProvider();
+								destClientPos.setConfiguration();
+								destClientPos.setDestConfiguration();
+								destClientPos.setHeaders(destClientPos.getDestProperty("Authentication"));
 
-							String url = sfApi.getUrl().replace("<" + sfApi.getReplaceTag() + ">",
-									compareMap.get(sfApi.getTagSourceValuePath()));
-
-							HttpResponse responsePos = destClientPos.callDestinationGET(url, "");
-
-							String responseString = EntityUtils.toString(responsePos.getEntity(), "UTF-8");
-							responseMap.put(entity, responseString);
-
-						}
-					}
-					// logger.debug("call the entity URLs which dependent on
-					// other entities ");
-					// call the entity URLs which dependent on other entities
-					for (String entity : entities) {
-
-						SFAPI sfApi = sfAPIService.findById(entity, "GET");
-
-						if (sfApi != null && !sfApi.getTagSource().equalsIgnoreCase("UI")) {
-							DestinationClient destClientPos = new DestinationClient();
-							destClientPos.setDestName(destinationName);
-							destClientPos.setHeaderProvider();
-							destClientPos.setConfiguration();
-							destClientPos.setDestConfiguration();
-							destClientPos.setHeaders(destClientPos.getDestProperty("Authentication"));
-
-							JSONObject depEntityObj = new JSONObject(responseMap.get(sfApi.getTagSource()));
-
-							JSONArray responseResult = depEntityObj.getJSONObject("d").getJSONArray("results");
-							JSONObject positionEntity = responseResult.getJSONObject(0);
-
-							// get the dependent value from the dependent entity
-
-							String replaceValue = getValueFromPathJson(positionEntity, sfApi.getTagSourceValuePath(),
-									compareMap);
-
-							// replacing the tag variable from the dependent
-							// entity data value
-							if (replaceValue != null && replaceValue.length() != 0) {
-								String url = sfApi.getUrl().replace("<" + sfApi.getReplaceTag() + ">", replaceValue);
+								String url = sfApi.getUrl().replace("<" + sfApi.getReplaceTag() + ">",
+										compareMap.get(sfApi.getTagSourceValuePath()));
 
 								HttpResponse responsePos = destClientPos.callDestinationGET(url, "");
-								if (responsePos.getStatusLine().getStatusCode() == 200) {
 
-									String responseString = EntityUtils.toString(responsePos.getEntity(), "UTF-8");
-									responseMap.put(entity, responseString);
+								String responseString = EntityUtils.toString(responsePos.getEntity(), "UTF-8");
+								responseMap.put(entity, responseString);
+
+							}
+						}
+						// logger.debug("call the entity URLs which dependent on
+						// other entities ");
+						// call the entity URLs which dependent on other entities
+						for (String entity : entities) {
+
+							SFAPI sfApi = sfAPIService.findById(entity, "GET");
+
+							if (sfApi != null && !sfApi.getTagSource().equalsIgnoreCase("UI")) {
+								DestinationClient destClientPos = new DestinationClient();
+								destClientPos.setDestName(destinationName);
+								destClientPos.setHeaderProvider();
+								destClientPos.setConfiguration();
+								destClientPos.setDestConfiguration();
+								destClientPos.setHeaders(destClientPos.getDestProperty("Authentication"));
+
+								JSONObject depEntityObj = new JSONObject(responseMap.get(sfApi.getTagSource()));
+
+								JSONArray responseResult = depEntityObj.getJSONObject("d").getJSONArray("results");
+								JSONObject positionEntity = responseResult.getJSONObject(0);
+
+								// get the dependent value from the dependent entity
+
+								String replaceValue = getValueFromPathJson(positionEntity,
+										sfApi.getTagSourceValuePath(), compareMap);
+
+								// replacing the tag variable from the dependent
+								// entity data value
+								if (replaceValue != null && replaceValue.length() != 0) {
+									String url = sfApi.getUrl().replace("<" + sfApi.getReplaceTag() + ">",
+											replaceValue);
+
+									HttpResponse responsePos = destClientPos.callDestinationGET(url, "");
+									if (responsePos.getStatusLine().getStatusCode() == 200) {
+
+										String responseString = EntityUtils.toString(responsePos.getEntity(), "UTF-8");
+										responseMap.put(entity, responseString);
+									}
 								}
 							}
 						}
 					}
-				}
 
-				// sort the groups
+					// sort the groups
 
-				Collections.sort(templateFieldGroups);
+					Collections.sort(templateFieldGroups);
 
-				// logger.debug("Loop the field Group to create the response
-				// JSON array ");
-				// Loop the field Group to create the response JSON array
-				for (MapTemplateFieldGroup tFieldGroup : templateFieldGroups) {
-					// manager app will only have fields which have is manager
-					// visible = true
-					if (tFieldGroup.getIsVisibleManager()) {
-						JSONObject fieldObject = new JSONObject();
-						Gson gson = new Gson();
+					// logger.debug("Loop the field Group to create the response
+					// JSON array ");
+					// Loop the field Group to create the response JSON array
+					for (MapTemplateFieldGroup tFieldGroup : templateFieldGroups) {
+						// manager app will only have fields which have is manager
+						// visible = true
+						if (tFieldGroup.getIsVisibleManager()) {
+							JSONObject fieldObject = new JSONObject();
+							Gson gson = new Gson();
 
-						if (tFieldGroup.getFieldGroup() != null) {
-							// setting the field Group
-							// logger.debug("setting the field
-							// Group"+tFieldGroup.getFieldGroup().getName());
-							tFieldGroup.getFieldGroup().setFieldGroupSeq(tFieldGroup.getFieldGroupSeq());
-							FieldGroupText fieldGroupText = fieldGroupTextService
-									.findByFieldGroupLanguage(tFieldGroup.getFieldGroupId(), compareMap.get("locale"));
-							if (fieldGroupText != null) {
-								tFieldGroup.getFieldGroup().setName(fieldGroupText.getName());
-							}
-
-							String jsonString = gson.toJson(tFieldGroup.getFieldGroup());
-							fieldObject.put("fieldGroup", new JSONObject(jsonString));
-
-							// logger.debug("creating the fields entity in the
-							// json per field
-							// group"+tFieldGroup.getFieldGroup().getName());
-							// creating the fields entity in the json per field
-							// group
-							List<MapTemplateFieldProperties> mapTemplateFieldPropertiesList = mapTemplateFieldPropertiesService
-									.findByTemplateFieldGroupManager(tFieldGroup.getId(), true);
-							// List<MapTemplateFieldProperties>
-							// mapTemplateFieldPropertiesList =
-							// mapTemplateFieldPropertiesService.findByTemplateFieldGroup(tFieldGroup.getId());
-
-							// sort the fieldProperties
-
-							Collections.sort(mapTemplateFieldPropertiesList);
-
-							for (MapTemplateFieldProperties mapTemplateFieldProperties : mapTemplateFieldPropertiesList) {
-
-								// setting field labels
-								// logger.debug("setting field
-								// labels"+mapTemplateFieldProperties.getField().getTechnicalName());
-
-								FieldText fieldText = fieldTextService.findByFieldLanguage(
-										mapTemplateFieldProperties.getFieldId(), compareMap.get("locale"));
-
-								if (fieldText != null) {
-
-									mapTemplateFieldProperties.getField().setName(fieldText.getName());
+							if (tFieldGroup.getFieldGroup() != null) {
+								// setting the field Group
+								// logger.debug("setting the field
+								// Group"+tFieldGroup.getFieldGroup().getName());
+								tFieldGroup.getFieldGroup().setFieldGroupSeq(tFieldGroup.getFieldGroupSeq());
+								FieldGroupText fieldGroupText = fieldGroupTextService.findByFieldGroupLanguage(
+										tFieldGroup.getFieldGroupId(), compareMap.get("locale"));
+								if (fieldGroupText != null) {
+									tFieldGroup.getFieldGroup().setName(fieldGroupText.getName());
 								}
 
-								// setting the field values
-								// logger.debug("setting the field
-								// values"+mapTemplateFieldProperties.getField().getName());
-								// INITIATE Template
-								if (compareMap.get("category").equalsIgnoreCase("INITIATE")) {
-									if (mapTemplateFieldProperties.getValue() == null) {
-										if (mapTemplateFieldProperties.getField().getInitialValue() != null) {
-											mapTemplateFieldProperties
-													.setValue(mapTemplateFieldProperties.getField().getInitialValue());
-										} else {
-											mapTemplateFieldProperties.setValue("");
-										}
+								String jsonString = gson.toJson(tFieldGroup.getFieldGroup());
+								fieldObject.put("fieldGroup", new JSONObject(jsonString));
+
+								// logger.debug("creating the fields entity in the
+								// json per field
+								// group"+tFieldGroup.getFieldGroup().getName());
+								// creating the fields entity in the json per field
+								// group
+								List<MapTemplateFieldProperties> mapTemplateFieldPropertiesList = mapTemplateFieldPropertiesService
+										.findByTemplateFieldGroupManager(tFieldGroup.getId(), true);
+								// List<MapTemplateFieldProperties>
+								// mapTemplateFieldPropertiesList =
+								// mapTemplateFieldPropertiesService.findByTemplateFieldGroup(tFieldGroup.getId());
+
+								// sort the fieldProperties
+
+								Collections.sort(mapTemplateFieldPropertiesList);
+
+								for (MapTemplateFieldProperties mapTemplateFieldProperties : mapTemplateFieldPropertiesList) {
+
+									// setting field labels
+									// logger.debug("setting field
+									// labels"+mapTemplateFieldProperties.getField().getTechnicalName());
+
+									FieldText fieldText = fieldTextService.findByFieldLanguage(
+											mapTemplateFieldProperties.getFieldId(), compareMap.get("locale"));
+
+									if (fieldText != null) {
+
+										mapTemplateFieldProperties.getField().setName(fieldText.getName());
 									}
 
-								} else {
-									// CONFIRM Template
-									if (mapTemplateFieldProperties.getField().getEntityName() != null) {
-										if (responseMap
-												.get(mapTemplateFieldProperties.getField().getEntityName()) != null) {
-											// logger.debug("responseMap:"+responseMap.get(mapTemplateFieldProperties.getField().getEntityName()));
-											JSONObject responseObject = new JSONObject(responseMap
-													.get(mapTemplateFieldProperties.getField().getEntityName()));
+									// setting the field values
+									// logger.debug("setting the field
+									// values"+mapTemplateFieldProperties.getField().getName());
+									// INITIATE Template
+									if (compareMap.get("category").equalsIgnoreCase("INITIATE")) {
+										if (mapTemplateFieldProperties.getValue() == null) {
+											if (mapTemplateFieldProperties.getField().getInitialValue() != null) {
+												mapTemplateFieldProperties.setValue(
+														mapTemplateFieldProperties.getField().getInitialValue());
+											} else {
+												mapTemplateFieldProperties.setValue("");
+											}
+										}
 
-											JSONArray responseResult = responseObject.getJSONObject("d")
-													.getJSONArray("results");
-											// logger.debug("responseResult:"+responseResult);
-											if (responseResult.length() != 0) {
-												JSONObject positionEntity = responseResult.getJSONObject(0);
-												// logger.debug("positionEntity:"+positionEntity);
-												String value;
-												if (!mapTemplateFieldProperties.getField().getTechnicalName()
-														.equalsIgnoreCase("startDate")) {
-													value = getValueFromPathJson(positionEntity,
-															mapTemplateFieldProperties.getField().getValueFromPath(),
-															compareMap);
-												} else {
+									} else {
+										// CONFIRM Template
+										if (mapTemplateFieldProperties.getField().getEntityName() != null) {
+											if (responseMap.get(
+													mapTemplateFieldProperties.getField().getEntityName()) != null) {
+												// logger.debug("responseMap:"+responseMap.get(mapTemplateFieldProperties.getField().getEntityName()));
+												JSONObject responseObject = new JSONObject(responseMap
+														.get(mapTemplateFieldProperties.getField().getEntityName()));
 
-													value = getValueFromPathJson(positionEntity, "customString11",
-															compareMap);
+												JSONArray responseResult = responseObject.getJSONObject("d")
+														.getJSONArray("results");
+												// logger.debug("responseResult:"+responseResult);
+												if (responseResult.length() != 0) {
+													JSONObject positionEntity = responseResult.getJSONObject(0);
+													// logger.debug("positionEntity:"+positionEntity);
+													String value;
+													if (!mapTemplateFieldProperties.getField().getTechnicalName()
+															.equalsIgnoreCase("startDate")) {
+														value = getValueFromPathJson(positionEntity,
+																mapTemplateFieldProperties.getField()
+																		.getValueFromPath(),
+																compareMap);
+													} else {
 
-													String milliSec = value.substring(value.indexOf("(") + 1,
-															value.indexOf(")"));
-													// logger.debug("Endate
-													// Milli Sec: "+milliSec);
-													long milliSecLong = Long.valueOf(milliSec).longValue()
-															- TimeUnit.DAYS.toMillis(padStartDate);
-													// milliSecLong =
-													// milliSecLong +
-													// TimeUnit.DAYS.toMillis(confirmStartDateDiffDays);
-													milliSec = Objects.toString(milliSecLong, null);
-													// logger.debug("New
-													// milliSec Milli Sec:
-													// "+milliSec);
-													value = value.replace(value.substring(value.indexOf("(") + 1,
-															value.lastIndexOf(")")), milliSec);
+														value = getValueFromPathJson(positionEntity, "customString11",
+																compareMap);
 
-												}
-												// logger.debug("value:"+value);
-												if (value != null) {
-													// logger.debug("value not
-													// null:"+value);
-													if (mapTemplateFieldProperties.getField().getFieldType()
-															.equalsIgnoreCase("Codelist")) {
-														// logger.debug("Inside
-														// Codelist
-														// "+mapTemplateFieldProperties.getField().getName());
+														String milliSec = value.substring(value.indexOf("(") + 1,
+																value.indexOf(")"));
+														// logger.debug("Endate
+														// Milli Sec: "+milliSec);
+														long milliSecLong = Long.valueOf(milliSec).longValue()
+																- TimeUnit.DAYS.toMillis(padStartDate);
+														// milliSecLong =
+														// milliSecLong +
+														// TimeUnit.DAYS.toMillis(confirmStartDateDiffDays);
+														milliSec = Objects.toString(milliSecLong, null);
+														// logger.debug("New
+														// milliSec Milli Sec:
+														// "+milliSec);
+														value = value.replace(value.substring(value.indexOf("(") + 1,
+																value.lastIndexOf(")")), milliSec);
 
-														List<CodeList> CodeList = codeListService.findByCountryField(
-																mapTemplateFieldProperties.getFieldId(),
-																compareMap.get("country"));
-														String codeListId = null;
-														if (CodeList.size() == 1) {
-															codeListId = CodeList.get(0).getId();
-														} else {
-															for (CodeList codeObject : CodeList) {
+													}
+													// logger.debug("value:"+value);
+													if (value != null) {
+														// logger.debug("value not
+														// null:"+value);
+														if (mapTemplateFieldProperties.getField().getFieldType()
+																.equalsIgnoreCase("Codelist")) {
+															// logger.debug("Inside
+															// Codelist
+															// "+mapTemplateFieldProperties.getField().getName());
 
-																for (MapTemplateFieldProperties existingField : mapTemplateFieldPropertiesList) {
-																	// logger.debug("existingField
-																	// Name: "+
-																	// existingField.getField().getName());
+															List<CodeList> CodeList = codeListService
+																	.findByCountryField(
+																			mapTemplateFieldProperties.getFieldId(),
+																			compareMap.get("country"));
+															String codeListId = null;
+															if (CodeList.size() == 1) {
+																codeListId = CodeList.get(0).getId();
+															} else {
+																for (CodeList codeObject : CodeList) {
 
-																	// logger.debug("
-																	// Existing
-																	// Field
-																	// TechName:
-																	// "+
-																	// existingField.getField().getTechnicalName());
-																	Field dependentField = fieldService
-																			.findById(codeObject.getDependentFieldId());
-																	// logger.debug("Dependent
-																	// Field
-																	// TecName:
-																	// "+
-																	// dependentField.getTechnicalName());
-																	if (existingField.getField().getTechnicalName()
-																			.equalsIgnoreCase(dependentField
-																					.getTechnicalName())) {
+																	for (MapTemplateFieldProperties existingField : mapTemplateFieldPropertiesList) {
+																		// logger.debug("existingField
+																		// Name: "+
+																		// existingField.getField().getName());
+
 																		// logger.debug("
-																		// Both
-																		// Dependent
-																		// and
 																		// Existing
 																		// Field
-																		// Match
-																		// "+existingField.getField().getTechnicalName());
-																		// logger.debug("existingField
-																		// Value"+existingField.getValue());
-																		// logger.debug("Code
-																		// List
-																		// Object
-																		// Dependent
-																		// Value"+codeObject.getDependentFieldValue());
-																		String existingFieldValue = null;
-																		if (existingField.getField()
-																				.getEntityName() != null) {
-																			SFAPI existingFieldEntity = sfAPIService
-																					.findById(
-																							existingField.getField()
-																									.getEntityName(),
-																							"GET");
-
-																			String dependentValuePath, dependentEname;
-																			if (existingFieldEntity.getTagSource()
-																					.equalsIgnoreCase("UI")) {
-																				dependentEname = existingField
-																						.getField().getEntityName();
-																				dependentValuePath = existingField
-																						.getField().getValueFromPath();
-																			} else {
-																				dependentEname = existingFieldEntity
-																						.getTagSource();
-																				dependentValuePath = existingFieldEntity
-																						.getTagSourceValuePath();
-																			}
-																			JSONObject dependentJsonObj = new JSONObject(
-																					responseMap.get(dependentEname));
-																			dependentJsonObj = dependentJsonObj
-																					.getJSONObject("d")
-																					.getJSONArray("results")
-																					.getJSONObject(0);
-																			existingFieldValue = getValueFromPathJson(
-																					dependentJsonObj,
-																					dependentValuePath, compareMap);
-																		} else {
-																			existingFieldValue = existingField
-																					.getValue();
-																		}
-																		// logger.debug("existingFieldValue"+existingFieldValue);
-																		if (existingFieldValue.equalsIgnoreCase(
-																				codeObject.getDependentFieldValue())) {
-																			// logger.debug("Both
-																			// Value
-																			// Existing
-																			// and
+																		// TechName:
+																		// "+
+																		// existingField.getField().getTechnicalName());
+																		Field dependentField = fieldService.findById(
+																				codeObject.getDependentFieldId());
+																		// logger.debug("Dependent
+																		// Field
+																		// TecName:
+																		// "+
+																		// dependentField.getTechnicalName());
+																		if (existingField.getField().getTechnicalName()
+																				.equalsIgnoreCase(dependentField
+																						.getTechnicalName())) {
+																			// logger.debug("
+																			// Both
 																			// Dependent
+																			// and
+																			// Existing
+																			// Field
 																			// Match
-																			// "+existingFieldValue);
-																			codeListId = codeObject.getId();
+																			// "+existingField.getField().getTechnicalName());
+																			// logger.debug("existingField
+																			// Value"+existingField.getValue());
+																			// logger.debug("Code
+																			// List
+																			// Object
+																			// Dependent
+																			// Value"+codeObject.getDependentFieldValue());
+																			String existingFieldValue = null;
+																			if (existingField.getField()
+																					.getEntityName() != null) {
+																				SFAPI existingFieldEntity = sfAPIService
+																						.findById(existingField
+																								.getField()
+																								.getEntityName(),
+																								"GET");
 
-																			break;
+																				String dependentValuePath,
+																						dependentEname;
+																				if (existingFieldEntity.getTagSource()
+																						.equalsIgnoreCase("UI")) {
+																					dependentEname = existingField
+																							.getField().getEntityName();
+																					dependentValuePath = existingField
+																							.getField()
+																							.getValueFromPath();
+																				} else {
+																					dependentEname = existingFieldEntity
+																							.getTagSource();
+																					dependentValuePath = existingFieldEntity
+																							.getTagSourceValuePath();
+																				}
+																				JSONObject dependentJsonObj = new JSONObject(
+																						responseMap
+																								.get(dependentEname));
+																				dependentJsonObj = dependentJsonObj
+																						.getJSONObject("d")
+																						.getJSONArray("results")
+																						.getJSONObject(0);
+																				existingFieldValue = getValueFromPathJson(
+																						dependentJsonObj,
+																						dependentValuePath, compareMap);
+																			} else {
+																				existingFieldValue = existingField
+																						.getValue();
+																			}
+																			// logger.debug("existingFieldValue"+existingFieldValue);
+																			if (existingFieldValue
+																					.equalsIgnoreCase(codeObject
+																							.getDependentFieldValue())) {
+																				// logger.debug("Both
+																				// Value
+																				// Existing
+																				// and
+																				// Dependent
+																				// Match
+																				// "+existingFieldValue);
+																				codeListId = codeObject.getId();
+
+																				break;
+																			}
 																		}
 																	}
-																}
-																if (codeListId != null) {
-																	break;
-																}
+																	if (codeListId != null) {
+																		break;
+																	}
 
+																}
+															}
+
+															// here
+															CodeListText clText = codeListTextService.findById(
+																	codeListId, compareMap.get("locale"), value);
+
+															if (clText != null) {
+																value = clText.getDescription();
+															} else {
+																value = "";
 															}
 														}
+														mapTemplateFieldProperties.setValue(value);
+													} else {
 
-														// here
-														CodeListText clText = codeListTextService.findById(codeListId,
-																compareMap.get("locale"), value);
-
-														if (clText != null) {
-															value = clText.getDescription();
-														} else {
-															value = "";
-														}
+														mapTemplateFieldProperties.setValue("");
 													}
-													mapTemplateFieldProperties.setValue(value);
 												} else {
-
 													mapTemplateFieldProperties.setValue("");
 												}
 											} else {
 												mapTemplateFieldProperties.setValue("");
 											}
 										} else {
-											mapTemplateFieldProperties.setValue("");
-										}
-									} else {
-										// logger.debug("No
-										// Entity"+mapTemplateFieldProperties.getField().getTechnicalName());
-										if (mapTemplateFieldProperties.getField().getInitialValue() != null) {
-											mapTemplateFieldProperties
-													.setValue(mapTemplateFieldProperties.getField().getInitialValue());
-										} else {
-											mapTemplateFieldProperties.setValue("");
+											// logger.debug("No
+											// Entity"+mapTemplateFieldProperties.getField().getTechnicalName());
+											if (mapTemplateFieldProperties.getField().getInitialValue() != null) {
+												mapTemplateFieldProperties.setValue(
+														mapTemplateFieldProperties.getField().getInitialValue());
+											} else {
+												mapTemplateFieldProperties.setValue("");
+											}
 										}
 									}
-								}
-								// making the field input type if the is
-								// Editable Manager is false
-								// logger.debug(" making the field input type if
-								// the is Editable Manager is
-								// false"+mapTemplateFieldProperties.getField().getName());
-								if (!mapTemplateFieldProperties.getIsEditableManager()) {
-									mapTemplateFieldProperties.getField().setFieldType("Input");
+									// making the field input type if the is
+									// Editable Manager is false
+									// logger.debug(" making the field input type if
+									// the is Editable Manager is
+									// false"+mapTemplateFieldProperties.getField().getName());
+									if (!mapTemplateFieldProperties.getIsEditableManager()) {
+										mapTemplateFieldProperties.getField().setFieldType("Input");
 
-									/// may be we need to call the picklist to
-									/// get the labels instead of key value
-									/// for few fields
-								}
+										/// may be we need to call the picklist to
+										/// get the labels instead of key value
+										/// for few fields
+									}
 
-								if (mapTemplateFieldProperties.getIsVisibleManager()) {
-									// logger.debug("setting drop down values if
-									// picklist, codelist,
-									// entity"+mapTemplateFieldProperties.getField().getName());
-									// setting drop down values if picklist,
-									// codelist, entity
+									if (mapTemplateFieldProperties.getIsVisibleManager()) {
+										// logger.debug("setting drop down values if
+										// picklist, codelist,
+										// entity"+mapTemplateFieldProperties.getField().getName());
+										// setting drop down values if picklist,
+										// codelist, entity
 
-									List<DropDownKeyValue> dropDown = new ArrayList<DropDownKeyValue>();
-									List<FieldDataFromSystem> fieldDataFromSystemList;
+										List<DropDownKeyValue> dropDown = new ArrayList<DropDownKeyValue>();
+										List<FieldDataFromSystem> fieldDataFromSystemList;
 
-									// switch case the picklist , entity and
-									// codelist to get the data from various
-									// systems
-									switch (mapTemplateFieldProperties.getField().getFieldType()) {
-									case "Picklist":
-										// logger.debug("Picklist"+mapTemplateFieldProperties.getField().getName());
-										fieldDataFromSystemList = fieldDataFromSystemService.findByFieldCountry(
-												mapTemplateFieldProperties.getField().getId(),
-												compareMap.get("country"));
+										// switch case the picklist , entity and
+										// codelist to get the data from various
+										// systems
+										switch (mapTemplateFieldProperties.getField().getFieldType()) {
+										case "Picklist":
+											// logger.debug("Picklist"+mapTemplateFieldProperties.getField().getName());
+											fieldDataFromSystemList = fieldDataFromSystemService.findByFieldCountry(
+													mapTemplateFieldProperties.getField().getId(),
+													compareMap.get("country"));
 
-										if (fieldDataFromSystemList.size() != 0) {
-											FieldDataFromSystem fieldDataFromSystem = fieldDataFromSystemList.get(0);
+											if (fieldDataFromSystemList.size() != 0) {
+												FieldDataFromSystem fieldDataFromSystem = fieldDataFromSystemList
+														.get(0);
 
-											//
-											// logger.debug("ID:
-											// "+fieldDataFromSystem.getFieldId()
-											// +", Name: "+
-											// mapTemplateFieldProperties.getField().getName()+fieldDataFromSystem.getIsDependentField());
-											String picklistUrlFilter = getPicklistUrlFilter(fieldDataFromSystem,
-													mapTemplateFieldProperties, compareMap, responseMap, destClient);
-											// logger.debug("picklistUrlFilter"+picklistUrlFilter);
+												//
+												// logger.debug("ID:
+												// "+fieldDataFromSystem.getFieldId()
+												// +", Name: "+
+												// mapTemplateFieldProperties.getField().getName()+fieldDataFromSystem.getIsDependentField());
+												String picklistUrlFilter = getPicklistUrlFilter(fieldDataFromSystem,
+														mapTemplateFieldProperties, compareMap, responseMap,
+														destClient);
+												// logger.debug("picklistUrlFilter"+picklistUrlFilter);
 
-											HttpResponse response = destClient.callDestinationGET(
-													fieldDataFromSystem.getPath(), picklistUrlFilter);
+												HttpResponse response = destClient.callDestinationGET(
+														fieldDataFromSystem.getPath(), picklistUrlFilter);
 
-											String responseJson = EntityUtils.toString(response.getEntity(), "UTF-8");
+												String responseJson = EntityUtils.toString(response.getEntity(),
+														"UTF-8");
 
-											// logger.debug("responseJson:"+responseJson);
-											JSONObject responseObject = new JSONObject(responseJson);
+												// logger.debug("responseJson:"+responseJson);
+												JSONObject responseObject = new JSONObject(responseJson);
 
-											JSONArray responseResult = responseObject.getJSONObject("d")
-													.getJSONArray("results");
-											for (int i = 0; i < responseResult.length(); i++) {
-												DropDownKeyValue keyValue = new DropDownKeyValue();
-												String key = (String) responseResult.getJSONObject(i)
-														.get(fieldDataFromSystem.getKey());
-												keyValue.setKey(key);
-
-												JSONArray pickListLabels = responseResult.getJSONObject(i)
-														.getJSONObject("picklistLabels").getJSONArray("results");
-												for (int j = 0; j < pickListLabels.length(); j++) {
-													if (pickListLabels.getJSONObject(j).get("locale").toString()
-															.equalsIgnoreCase(compareMap.get("locale"))) {
-														keyValue.setValue(pickListLabels.getJSONObject(j).get("label")
-																.toString());
-													}
-												}
-
-												dropDown.add(keyValue);
-											}
-
-										}
-										break;
-									case "Entity":
-										// logger.debug("Entity"+mapTemplateFieldProperties.getField().getName());
-										fieldDataFromSystemList = fieldDataFromSystemService.findByFieldCountry(
-												mapTemplateFieldProperties.getField().getId(),
-												compareMap.get("country"));
-
-										if (fieldDataFromSystemList.size() != 0) {
-											FieldDataFromSystem fieldDataFromSystem = fieldDataFromSystemList.get(0);
-
-											// logger.debug("ID:
-											// "+fieldDataFromSystem.getFieldId()
-											// +", Name: "+
-											// mapTemplateFieldProperties.getField().getName()+fieldDataFromSystem.getIsDependentField());
-											String picklistUrlFilter = getPicklistUrlFilter(fieldDataFromSystem,
-													mapTemplateFieldProperties, compareMap, responseMap, destClient);
-											// logger.debug("picklistUrlFilter"+picklistUrlFilter);
-											HttpResponse response = destClient.callDestinationGET(
-													fieldDataFromSystem.getPath(), picklistUrlFilter);
-
-											String responseJson = EntityUtils.toString(response.getEntity(), "UTF-8");
-											JSONObject responseObject = new JSONObject(responseJson);
-											// logger.debug("responseObject"+responseObject);
-											JSONArray responseResult = responseObject.getJSONObject("d")
-													.getJSONArray("results");
-											String valuePath = fieldDataFromSystem.getValue();
-											String[] valuePathArray = valuePath.split("/");
-											String keyPath = fieldDataFromSystem.getKey();
-											String[] keyPathArray = keyPath.split("/");
-											JSONObject temp = null;
-											int index = 0;
-
-											// logger.debug("valuePathArray.length"+valuePathArray.length);
-											if (valuePathArray.length > 1 && keyPathArray.length > 1) {
-												for (int k = 0; k < valuePathArray.length - 1; k++) {
-													JSONObject tempObj = responseResult.getJSONObject(0)
-															.getJSONObject(valuePathArray[index]);
-													if (tempObj.has("results")) {
-														responseResult = tempObj.getJSONArray("results");
-													} else {
-														JSONArray tempArray = new JSONArray();
-														tempArray.put(tempObj);
-														responseResult = tempArray;
-													}
-													index = index + 1;
-												}
-											}
-
-											for (int i = 0; i < responseResult.length(); i++) {
-												temp = responseResult.getJSONObject(i);
-												DropDownKeyValue keyValue = new DropDownKeyValue();
-												if (valuePathArray[index].contains("<locale>")) {
-
-													valuePathArray[index] = valuePathArray[index].replace("<locale>",
-															compareMap.get("locale"));
-												}
-												keyValue.setValue(temp.get(valuePathArray[index]).toString());
-												keyValue.setKey(temp.get(keyPathArray[index]).toString());
-
-												dropDown.add(keyValue);
-											}
-										}
-
-										break;
-									case "Codelist":
-										// logger.debug("Codelist"+mapTemplateFieldProperties.getField().getName());
-
-										List<CodeList> codeList = codeListService.findByCountryField(
-												mapTemplateFieldProperties.getField().getId(),
-												compareMap.get("country"));
-										if (codeList.size() != 0) {
-											if (codeList.size() == 1) {
-												List<CodeListText> codeListValues = codeListTextService
-														.findByCodeListIdLang(codeList.get(0).getId(),
-																compareMap.get("locale"));
-												for (CodeListText value : codeListValues) {
+												JSONArray responseResult = responseObject.getJSONObject("d")
+														.getJSONArray("results");
+												for (int i = 0; i < responseResult.length(); i++) {
 													DropDownKeyValue keyValue = new DropDownKeyValue();
-													keyValue.setKey(value.getValue());
-													keyValue.setValue(value.getDescription());
+													String key = (String) responseResult.getJSONObject(i)
+															.get(fieldDataFromSystem.getKey());
+													keyValue.setKey(key);
+
+													JSONArray pickListLabels = responseResult.getJSONObject(i)
+															.getJSONObject("picklistLabels").getJSONArray("results");
+													for (int j = 0; j < pickListLabels.length(); j++) {
+														if (pickListLabels.getJSONObject(j).get("locale").toString()
+																.equalsIgnoreCase(compareMap.get("locale"))) {
+															keyValue.setValue(pickListLabels.getJSONObject(j)
+																	.get("label").toString());
+														}
+													}
+
+													dropDown.add(keyValue);
+												}
+
+											}
+											break;
+										case "Entity":
+											// logger.debug("Entity"+mapTemplateFieldProperties.getField().getName());
+											fieldDataFromSystemList = fieldDataFromSystemService.findByFieldCountry(
+													mapTemplateFieldProperties.getField().getId(),
+													compareMap.get("country"));
+
+											if (fieldDataFromSystemList.size() != 0) {
+												FieldDataFromSystem fieldDataFromSystem = fieldDataFromSystemList
+														.get(0);
+
+												// logger.debug("ID:
+												// "+fieldDataFromSystem.getFieldId()
+												// +", Name: "+
+												// mapTemplateFieldProperties.getField().getName()+fieldDataFromSystem.getIsDependentField());
+												String picklistUrlFilter = getPicklistUrlFilter(fieldDataFromSystem,
+														mapTemplateFieldProperties, compareMap, responseMap,
+														destClient);
+												// logger.debug("picklistUrlFilter"+picklistUrlFilter);
+												HttpResponse response = destClient.callDestinationGET(
+														fieldDataFromSystem.getPath(), picklistUrlFilter);
+
+												String responseJson = EntityUtils.toString(response.getEntity(),
+														"UTF-8");
+												JSONObject responseObject = new JSONObject(responseJson);
+												// logger.debug("responseObject"+responseObject);
+												JSONArray responseResult = responseObject.getJSONObject("d")
+														.getJSONArray("results");
+												String valuePath = fieldDataFromSystem.getValue();
+												String[] valuePathArray = valuePath.split("/");
+												String keyPath = fieldDataFromSystem.getKey();
+												String[] keyPathArray = keyPath.split("/");
+												JSONObject temp = null;
+												int index = 0;
+
+												// logger.debug("valuePathArray.length"+valuePathArray.length);
+												if (valuePathArray.length > 1 && keyPathArray.length > 1) {
+													for (int k = 0; k < valuePathArray.length - 1; k++) {
+														JSONObject tempObj = responseResult.getJSONObject(0)
+																.getJSONObject(valuePathArray[index]);
+														if (tempObj.has("results")) {
+															responseResult = tempObj.getJSONArray("results");
+														} else {
+															JSONArray tempArray = new JSONArray();
+															tempArray.put(tempObj);
+															responseResult = tempArray;
+														}
+														index = index + 1;
+													}
+												}
+
+												for (int i = 0; i < responseResult.length(); i++) {
+													temp = responseResult.getJSONObject(i);
+													DropDownKeyValue keyValue = new DropDownKeyValue();
+													if (valuePathArray[index].contains("<locale>")) {
+
+														valuePathArray[index] = valuePathArray[index]
+																.replace("<locale>", compareMap.get("locale"));
+													}
+													keyValue.setValue(temp.get(valuePathArray[index]).toString());
+													keyValue.setKey(temp.get(keyPathArray[index]).toString());
+
 													dropDown.add(keyValue);
 												}
 											}
 
+											break;
+										case "Codelist":
+											// logger.debug("Codelist"+mapTemplateFieldProperties.getField().getName());
+
+											List<CodeList> codeList = codeListService.findByCountryField(
+													mapTemplateFieldProperties.getField().getId(),
+													compareMap.get("country"));
+											if (codeList.size() != 0) {
+												if (codeList.size() == 1) {
+													List<CodeListText> codeListValues = codeListTextService
+															.findByCodeListIdLang(codeList.get(0).getId(),
+																	compareMap.get("locale"));
+													for (CodeListText value : codeListValues) {
+														DropDownKeyValue keyValue = new DropDownKeyValue();
+														keyValue.setKey(value.getValue());
+														keyValue.setValue(value.getDescription());
+														dropDown.add(keyValue);
+													}
+												}
+
+											}
+											break;
 										}
-										break;
+
+										mapTemplateFieldProperties.setDropDownValues(dropDown);
+
 									}
-
-									mapTemplateFieldProperties.setDropDownValues(dropDown);
-
 								}
+								fieldObject.put("fields", mapTemplateFieldPropertiesList);
+								returnArray.put(fieldObject);
 							}
-							fieldObject.put("fields", mapTemplateFieldPropertiesList);
-							returnArray.put(fieldObject);
 						}
 					}
+
 				}
-
 			}
+			returnObject.put("TemplateFieldGroups", returnArray);
+			return ResponseEntity.ok().body(returnObject.toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		returnObject.put("TemplateFieldGroups", returnArray);
-		return ResponseEntity.ok().body(returnObject.toString());
-
 	}
 
 	private String getPicklistUrlFilter(FieldDataFromSystem fieldDataFromSystem,

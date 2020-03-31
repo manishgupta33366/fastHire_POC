@@ -43,24 +43,29 @@ public class CustPersonIdGen {
 
 	@GetMapping(value = ConstantManager.custPerIDGen, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public String generateID(HttpServletRequest request) {
+		try {
+			URLManager genURL = new URLManager(getClass().getSimpleName(), configName);
+			String urlToCall = genURL.formURLToCall();
+			logger.info(
+					ConstantManager.lineSeparator + ConstantManager.urlLog + urlToCall + ConstantManager.lineSeparator);
 
-		URLManager genURL = new URLManager(getClass().getSimpleName(), configName);
-		String urlToCall = genURL.formURLToCall();
-		logger.info(ConstantManager.lineSeparator + ConstantManager.urlLog + urlToCall + ConstantManager.lineSeparator);
+			// Get details from server
+			URI uri = CommonFunctions.convertToURI(urlToCall);
+			HttpConnectionPOST httpConnectionPOST = new HttpConnectionPOST(uri, URLManager.dConfiguration, "{}",
+					CustPersonIdGen.class);
 
-		// Get details from server
-		URI uri = CommonFunctions.convertToURI(urlToCall);
-		HttpConnectionPOST httpConnectionPOST = new HttpConnectionPOST(uri, URLManager.dConfiguration, "{}",
-				CustPersonIdGen.class);
-
-		String result = httpConnectionPOST.connectToServer();
-		JSONObject jsonObj = (JSONObject) JSONValue.parse(result);
-		jsonObj = (JSONObject) jsonObj.get("d");
-		this.userID = jsonObj.get("externalCode").toString();
-		HttpSession session = request.getSession(false);
-		session.setAttribute("userID", this.userID);
-		logger.error("UserId Set at session:" + this.userID);
-		return checkResp(this.userID);
+			String result = httpConnectionPOST.connectToServer();
+			JSONObject jsonObj = (JSONObject) JSONValue.parse(result);
+			jsonObj = (JSONObject) jsonObj.get("d");
+			this.userID = jsonObj.get("externalCode").toString();
+			HttpSession session = request.getSession(false);
+			session.setAttribute("userID", this.userID);
+			logger.error("UserId Set at session:" + this.userID);
+			return checkResp(this.userID);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	@PostMapping(value = ConstantManager.custPerIDGen, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
