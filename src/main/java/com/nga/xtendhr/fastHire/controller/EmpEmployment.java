@@ -4,9 +4,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -44,6 +41,7 @@ public class EmpEmployment {
 
 	private String startDate = null;
 	private String firstDateWorked = null;
+	private static String datePattern = "dd/MM/yyyy";
 
 	@PostMapping(value = ConstantManager.empEmployment, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public String empEmployment(@RequestBody String request, HttpServletRequest requestForSession)
@@ -93,13 +91,14 @@ public class EmpEmployment {
 						paramName = techName;
 						paramValue = field.getValue().toString();
 
+						startDate = field.getValue().toString();
+						logger.debug("startdate: " + startDate);
 //						logger.error(paramName.toString());
 //						logger.error(paramValue.toString());
 
-					} else if (techName.toLowerCase().equals("startdate")) {
-						startDate = field.getValue().toString();
 					} else if (techName.toLowerCase().equals("firstdateworked")) {
 						firstDateWorked = field.getValue().toString();
+						logger.debug("firstDateWorked: " + firstDateWorked);
 					}
 				}
 			}
@@ -126,22 +125,26 @@ public class EmpEmployment {
 		JSONObject jsonObj = new JSONObject();
 		jsonObj.put("uri", "EmpEmployment(personIdExternal='" + userID + "',userId='" + userID + "')");
 		obj.put("__metadata", jsonObj);
+		logger.debug("startDate2: " + startDate);
 		obj.put(paramName, dateFormatted(startDate));
 		obj.put("personIdExternal", userID);
 		obj.put("userId", userID);
+		logger.debug("firstDateWorked2: " + firstDateWorked);
 		obj.put("firstDateWorked", dateFormatted(firstDateWorked));
 //		logger.error(obj.toJSONString());
 		return obj.toJSONString();
 	}
 
 	private String dateFormatted(String startDate) {
-//		logger.error("Start Date" + startDate);
-		String timeStamp = " 00:00:00:000";
-		String receivedTimetamp = startDate + timeStamp;
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss:SSS");
-		LocalDateTime dateTime = LocalDateTime.parse(receivedTimetamp, formatter);
-		String date = String.valueOf(dateTime.atOffset(ZoneOffset.UTC).toInstant().toEpochMilli());
-		return "/Date(" + date + ")/";
+		SimpleDateFormat simpleDateFormat = new SimpleDateFormat(datePattern);
+		Date date = null;
+		try {
+			date = simpleDateFormat.parse(startDate);
+		} catch (ParseException e) {
+			logger.error(e.toString());
+		}
+		long epoch = date.getTime();
+		return "/Date(" + epoch + ")/";
 	}
 
 }

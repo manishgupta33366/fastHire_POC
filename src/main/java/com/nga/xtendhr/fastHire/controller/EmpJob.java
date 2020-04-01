@@ -414,7 +414,7 @@ public class EmpJob {
 		obj.put("managerId", managerId);
 //		obj.put(paramContractEDateName, paramContractEDateValue);
 //		obj.put(paramcontractTypeName, paramcontractTypeValue);
-		obj.put(paramFirmSubCategoryName, paramFirmSubCategoryValue);
+//		obj.put(paramFirmSubCategoryName, paramFirmSubCategoryValue);
 		obj.put(ConstantManager.customDateName, customDateValue);
 
 		obj.put("payScaleArea", payScaleArea);

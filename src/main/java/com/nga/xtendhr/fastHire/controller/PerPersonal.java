@@ -57,6 +57,7 @@ public class PerPersonal {
 	private final String firstName = "firstname";
 	private final String lastName = "lastname";
 	private final String prefLang = "nativePreferredLang";
+	private String maritalstatus = null;
 
 	@PostMapping(value = ConstantManager.perPersonal, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public String perPerson(@RequestBody String request, HttpServletRequest requestForSession) {
@@ -124,6 +125,8 @@ public class PerPersonal {
 						paramPrefLangValue = field.getValue().toString();
 //						logger.error(paramPrefLang.toString());
 //						logger.error(paramPrefLangValue.toString());
+					} else if (techName.toLowerCase().equals("maritalstatus")) {
+						maritalstatus = field.getValue().toString();
 					}
 				}
 			}
@@ -143,7 +146,7 @@ public class PerPersonal {
 
 		obj.put("personIdExternal", userID);
 		obj.put(paramName, paramValue);
-		obj.put("maritalStatus", "25616");
+		obj.put("maritalStatus", maritalstatus);
 		obj.put(paramNationalityName, paramNationalityValue);
 		obj.put(paramFirstName, paramFirstNameValue);
 		obj.put(paramLastName, paramLastNameValue);
