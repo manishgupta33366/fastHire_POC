@@ -10,6 +10,7 @@ import javax.servlet.http.HttpSession;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +21,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nga.xtendhr.fastHire.POJO.Detail;
 import com.nga.xtendhr.fastHire.POJO.Field;
 import com.nga.xtendhr.fastHire.connections.HttpConnectionPOST;
+import com.nga.xtendhr.fastHire.model.SFConstants;
+import com.nga.xtendhr.fastHire.service.SFConstantsService;
 import com.nga.xtendhr.fastHire.utilities.CommonFunctions;
 import com.nga.xtendhr.fastHire.utilities.ConstantManager;
 import com.nga.xtendhr.fastHire.utilities.URLManager;
@@ -27,6 +30,8 @@ import com.nga.xtendhr.fastHire.utilities.URLManager;
 @RestController
 @RequestMapping(value = ConstantManager.genAPI)
 public class PerEmail {
+	@Autowired
+	SFConstantsService sfConstantsService;
 
 	private static final String configName = "sfconfigname";
 	private static final Logger logger = LoggerFactory.getLogger(PerEmail.class);
@@ -94,8 +99,8 @@ public class PerEmail {
 		JSONObject jsonObj = new JSONObject();
 		jsonObj.put("uri", "PerEmail");
 		obj.put("__metadata", jsonObj);
-
-		obj.put("emailType", "25603");
+		SFConstants emailTypeId = sfConstantsService.findById("emailTypeId");
+		obj.put("emailType", emailTypeId.getValue());
 		obj.put("personIdExternal", userID);
 		obj.put("isPrimary", true);
 		obj.put(paramName, paramValue);

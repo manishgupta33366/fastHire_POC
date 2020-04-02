@@ -8,6 +8,7 @@
 			<property name="eclipselink.ddl-generation" value="create-tables"/>
 			<property name="eclipselink.logging.level" value="SEVERE" />
 			<property name="javax.persistence.nonJtaDataSource" value="java:comp/env/jdbc/DefaultDB" />
+			<property name="eclipselink.cache.shared.default" value="false" />
 			<property name="eclipselink.allow-zero-id" value="true"/>
 		</properties>
 	</persistence-unit>
