@@ -1,13 +1,17 @@
 package com.nga.xtendhr.fastHire.controller;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -21,6 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -28,15 +33,29 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.apache.olingo.odata2.api.batch.BatchException;
 import org.apache.olingo.odata2.api.client.batch.BatchSingleResponse;
+import org.apache.poi.xwpf.converter.pdf.PdfConverter;
+import org.apache.poi.xwpf.converter.pdf.PdfOptions;
+import org.apache.poi.xwpf.model.XWPFHeaderFooterPolicy;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFFooter;
+import org.apache.poi.xwpf.usermodel.XWPFHeader;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell;
+import org.apache.poi.xwpf.usermodel.XWPFTableRow;
+import org.apache.xmlbeans.XmlException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -58,11 +77,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.google.gson.Gson;
 import com.nga.xtendhr.fastHire.SF.BatchRequest;
 import com.nga.xtendhr.fastHire.SF.DestinationClient;
-import com.nga.xtendhr.fastHire.connections.GenerateDocConnection;
 import com.nga.xtendhr.fastHire.model.CodeList;
 import com.nga.xtendhr.fastHire.model.CodeListText;
 import com.nga.xtendhr.fastHire.model.Contract;
 import com.nga.xtendhr.fastHire.model.ContractCriteria;
+import com.nga.xtendhr.fastHire.model.DocTemplateTags;
+import com.nga.xtendhr.fastHire.model.DocTemplates;
 import com.nga.xtendhr.fastHire.model.Field;
 import com.nga.xtendhr.fastHire.model.FieldDataFromSystem;
 import com.nga.xtendhr.fastHire.model.FieldGroupText;
@@ -79,6 +99,9 @@ import com.nga.xtendhr.fastHire.service.CodeListService;
 import com.nga.xtendhr.fastHire.service.CodeListTextService;
 import com.nga.xtendhr.fastHire.service.ContractCriteriaService;
 import com.nga.xtendhr.fastHire.service.ContractService;
+import com.nga.xtendhr.fastHire.service.DocTemplateDetailsService;
+import com.nga.xtendhr.fastHire.service.DocTemplateTagsService;
+import com.nga.xtendhr.fastHire.service.DocTemplatesService;
 import com.nga.xtendhr.fastHire.service.FieldDataFromSystemService;
 import com.nga.xtendhr.fastHire.service.FieldGroupTextService;
 import com.nga.xtendhr.fastHire.service.FieldService;
@@ -165,6 +188,14 @@ public class PreHireManagerController {
 	@Autowired
 	ContractCriteriaService contractCriteriaService;
 
+	@Autowired
+	DocTemplatesService docTemplatesService;
+
+	@Autowired
+	DocTemplateDetailsService docTemplateDetailsService;
+
+	@Autowired
+	DocTemplateTagsService docTemplateTagsService;
 //	@Autowired
 //	ConfirmStatusService confirmStatusService;
 
@@ -1541,7 +1572,7 @@ public class PreHireManagerController {
 					entityMap.put("PerPersonal", "?$filter=personIdExternal eq '" + map.get("userId")
 							+ "'&$format=json&$select=startDate,personIdExternal,birthName,initials,maritalStatus,certificateStartDate,namePrefix,salutation,nativePreferredLang,since,gender,lastName,nameFormat,firstName,certificateEndDate,preferredName,secondNationality,formalName,nationality");
 					entityMap.put("EmpJob", "?$filter=userId eq '" + map.get("userId")
-							+ "'&$format=json&$expand=positionNav/companyNav,positionNav&$select=positionNav/externalName_localized,positionNav/companyNav/country,jobTitle,startDate,userId,jobCode,employmentType,workscheduleCode,division,standardHours,costCenter,payGrade,department,timeTypeProfileCode,businessUnit,managerId,position,employeeClass,countryOfCompany,location,holidayCalendarCode,company,eventReason,contractEndDate,contractType,customDate18");
+							+ "'&$format=json&$expand=positionNav/companyNav,positionNav&$select=positionNav/externalName_localized,positionNav/companyNav/country,jobTitle,startDate,userId,jobCode,employmentType,workscheduleCode,division,standardHours,costCenter,payGrade,department,timeTypeProfileCode,businessUnit,managerId,position,employeeClass,countryOfCompany,location,holidayCalendarCode,company,eventReason,contractEndDate,contractType,customDate18,payScaleArea,payScaleType");
 					entityMap.put("PerPerson", "?$filter=personIdExternal  eq '" + map.get("userId")
 							+ "'&$format=json&$select=personIdExternal,dateOfBirth,placeOfBirth,perPersonUuid,countryOfBirth");
 					entityMap.put("PerEmail", "?$filter=personIdExternal eq '" + map.get("userId")
@@ -1736,10 +1767,10 @@ public class PreHireManagerController {
 	}
 
 	@GetMapping(value = "/DocDownload/{personId}")
-	public ResponseEntity<?> downloadDocument(@PathVariable("personId") String personId, HttpServletRequest request)
-			throws NamingException, ClientProtocolException, IOException, URISyntaxException, BatchException,
-			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException {
+	public ResponseEntity<?> downloadDocument(@PathVariable("personId") String personId, HttpServletRequest request,
+			HttpServletResponse httpResponse) throws NamingException, ClientProtocolException, IOException,
+			URISyntaxException, BatchException, UnsupportedOperationException, NoSuchMethodException, SecurityException,
+			IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
 		String loggedInUser = request.getUserPrincipal().getName();
 		Map<String, String> map = new HashMap<String, String>();
@@ -1765,29 +1796,45 @@ public class PreHireManagerController {
 			Map<String, String> entityMap = new HashMap<String, String>();
 
 			entityMap.put("User", "?$filter=userId eq '" + map.get("userId") + "'&$format=json&$select=defaultLocale");
-			entityMap.put("EmpPayCompRecurring", "?$filter=userId eq '" + map.get("userId") + "'&fromDate=" + dateString
-					+ "&$format=json&$select=userId,startDate,payComponent,paycompvalue,currencyCode,frequency,notes");
-			entityMap.put("EmpCompensation", "?$filter=userId eq '" + map.get("userId") + "'&fromDate=" + dateString
-					+ "&$format=json&$select=userId,startDate,payGroup,eventReason");
+			/*
+			 * entityMap.put("EmpPayCompRecurring", "?$filter=userId eq '" +
+			 * map.get("userId") + "'&fromDate=" + dateString +
+			 * "&$format=json&$select=userId,startDate,payComponent,paycompvalue,currencyCode,frequency,notes"
+			 * );
+			 */
+			/*
+			 * entityMap.put("EmpCompensation", "?$filter=userId eq '" + map.get("userId") +
+			 * "'&fromDate=" + dateString +
+			 * "&$format=json&$select=userId,startDate,payGroup,eventReason");
+			 */
 			entityMap.put("EmpEmployment", "?$filter=personIdExternal eq '" + map.get("userId") + "'&fromDate="
 					+ dateString + "&$format=json&$select=userId,startDate,personIdExternal");
-			entityMap.put("PaymentInformationV3", "?$format=json&$filter=worker eq '" + map.get("userId")
-					+ "'&fromDate=" + dateString
-					+ "&$expand=toPaymentInformationDetailV3&$select=effectiveStartDate,worker,toPaymentInformationDetailV3/PaymentInformationV3_effectiveStartDate,toPaymentInformationDetailV3/PaymentInformationV3_worker,toPaymentInformationDetailV3/amount,toPaymentInformationDetailV3/accountNumber,toPaymentInformationDetailV3/bank,toPaymentInformationDetailV3/payType,toPaymentInformationDetailV3/iban,toPaymentInformationDetailV3/purpose,toPaymentInformationDetailV3/routingNumber,toPaymentInformationDetailV3/bankCountry,toPaymentInformationDetailV3/currency,toPaymentInformationDetailV3/businessIdentifierCode,toPaymentInformationDetailV3/paymentMethod");
+			/*
+			 * entityMap.put("PaymentInformationV3", "?$format=json&$filter=worker eq '" +
+			 * map.get("userId") + "'&fromDate=" + dateString +
+			 * "&$expand=toPaymentInformationDetailV3&$select=effectiveStartDate,worker,toPaymentInformationDetailV3/PaymentInformationV3_effectiveStartDate,toPaymentInformationDetailV3/PaymentInformationV3_worker,toPaymentInformationDetailV3/amount,toPaymentInformationDetailV3/accountNumber,toPaymentInformationDetailV3/bank,toPaymentInformationDetailV3/payType,toPaymentInformationDetailV3/iban,toPaymentInformationDetailV3/purpose,toPaymentInformationDetailV3/routingNumber,toPaymentInformationDetailV3/bankCountry,toPaymentInformationDetailV3/currency,toPaymentInformationDetailV3/businessIdentifierCode,toPaymentInformationDetailV3/paymentMethod"
+			 * );
+			 */
 			entityMap.put("PerPersonal", "?$filter=personIdExternal eq '" + map.get("userId") + "'&fromDate="
 					+ dateString
 					+ "&$format=json&$select=startDate,personIdExternal,birthName,initials,maritalStatus,certificateStartDate,namePrefix,salutation,nativePreferredLang,since,gender,lastName,nameFormat,firstName,certificateEndDate,preferredName,secondNationality,formalName,nationality");
-			entityMap.put("PerAddressDEFLT", "?$filter=personIdExternal eq '" + map.get("userId") + "'&fromDate="
-					+ dateString
-					+ "&$format=json&$expand=address9Nav/picklistLabels,countryNav&$select=startDate,personIdExternal,addressType,address1,address2,address3,city,zipCode,country,address7,address6,address5,address4,county,address9,address8,address9Nav/picklistLabels/label,address9Nav/picklistLabels/locale,countryNav/territoryName");
+			/*
+			 * entityMap.put("PerAddressDEFLT", "?$filter=personIdExternal eq '" +
+			 * map.get("userId") + "'&fromDate=" + dateString +
+			 * "&$format=json&$expand=address9Nav/picklistLabels,countryNav&$select=startDate,personIdExternal,addressType,address1,address2,address3,city,zipCode,country,address7,address6,address5,address4,county,address9,address8,address9Nav/picklistLabels/label,address9Nav/picklistLabels/locale,countryNav/territoryName"
+			 * );
+			 */
 			entityMap.put("EmpJob", "?$filter=userId eq '" + map.get("userId") + "'&fromDate=" + dateString
 					+ "&$format=json&$expand=positionNav/companyNav,positionNav&$select=positionNav/companyNav/country,jobTitle,startDate,userId,jobCode,employmentType,workscheduleCode,division,standardHours,costCenter,payGrade,department,timeTypeProfileCode,businessUnit,managerId,position,employeeClass,countryOfCompany,location,holidayCalendarCode,company,eventReason,contractEndDate,contractType,positionNav/externalName_localized");
 			entityMap.put("PerPerson", "?$filter=personIdExternal  eq '" + map.get("userId") + "'&fromDate="
 					+ dateString + "&$format=json&$select=personIdExternal,dateOfBirth,placeOfBirth,perPersonUuid");
 			entityMap.put("PerEmail", "?$filter=personIdExternal eq '" + map.get("userId") + "'&fromDate=" + dateString
 					+ "&$format=json&$select=personIdExternal,emailAddress");
-			entityMap.put("cust_Additional_Information",
-					"?$format=json&$filter=externalCode eq '" + map.get("userId") + "'&fromDate=" + dateString);
+			/*
+			 * entityMap.put("cust_Additional_Information",
+			 * "?$format=json&$filter=externalCode eq '" + map.get("userId") + "'&fromDate="
+			 * + dateString);
+			 */
 			entityMap.put("cust_personIdGenerate",
 					"?$format=json&$filter=externalCode eq '" + map.get("userId") + "'&fromDate=" + dateString);
 
@@ -1818,7 +1865,7 @@ public class PreHireManagerController {
 				}
 			}
 
-			HttpResponse response = generateDoc(docGenerationObject.toString(), loggedInUser);
+			HttpResponse response = generateDoc(docGenerationObject.toString(), loggedInUser, httpResponse);
 			String msg = response.getAllHeaders()[0].getValue();
 			if (response != null && !msg.equals("NoTemplateFound")) {
 				if (response.getStatusLine().getStatusCode() == 200) {
@@ -1903,7 +1950,7 @@ public class PreHireManagerController {
 				entityMap.put("PerPersonal", "?$filter=personIdExternal eq '" + map.get("userId")
 						+ "'&$format=json&$select=startDate,personIdExternal,birthName,initials,maritalStatus,certificateStartDate,namePrefix,salutation,nativePreferredLang,since,gender,lastName,nameFormat,firstName,certificateEndDate,preferredName,secondNationality,formalName,nationality");
 				entityMap.put("EmpJob", "?$filter=userId eq '" + map.get("userId")
-						+ "'&$format=json&$expand=positionNav/companyNav,positionNav&$select=positionNav/externalName_localized,positionNav/companyNav/country,jobTitle,startDate,userId,jobCode,employmentType,workscheduleCode,division,standardHours,costCenter,payGrade,department,timeTypeProfileCode,businessUnit,managerId,position,employeeClass,countryOfCompany,location,holidayCalendarCode,company,eventReason,contractEndDate,contractType,customDate18");
+						+ "'&$format=json&$expand=positionNav/companyNav,positionNav&$select=positionNav/externalName_localized,positionNav/companyNav/country,jobTitle,startDate,userId,jobCode,employmentType,workscheduleCode,division,standardHours,costCenter,payGrade,department,timeTypeProfileCode,businessUnit,managerId,position,employeeClass,countryOfCompany,location,holidayCalendarCode,company,eventReason,contractEndDate,contractType,customDate18,payScaleArea,payScaleType");
 				entityMap.put("PerPerson", "?$filter=personIdExternal  eq '" + map.get("userId")
 						+ "'&$format=json&$select=personIdExternal,dateOfBirth,placeOfBirth,perPersonUuid,countryOfBirth");
 				entityMap.put("PerEmail", "?$filter=personIdExternal eq '" + map.get("userId")
@@ -2109,9 +2156,9 @@ public class PreHireManagerController {
 		return jsonObject;
 	}
 
-	public HttpResponse generateDoc(String reqString, String loggedInUser)
+	public HttpResponse generateDoc(String reqString, String loggedInUser, HttpServletResponse httpResponse)
 			throws NamingException, IOException, URISyntaxException, NoSuchMethodException, SecurityException,
-			IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+			IllegalAccessException, IllegalArgumentException, InvocationTargetException, XmlException {
 		ctx = new InitialContext();
 		logger.debug("Doc Genetration: reqString" + reqString);
 
@@ -2151,15 +2198,21 @@ public class PreHireManagerController {
 		logger.debug("templateID: " + templateID);
 		Contract contract = contractService.findById(templateID);
 		logger.debug("contract: " + contract);
-		if (contract != null) {
-			logger.debug("contract.getTemplate()" + contract.getTemplate());
-			reqBodyObj.put("TemplateName", contract.getTemplate());
-		} else {
+		/*
+		 * if (contract != null) { logger.debug("contract.getTemplate()" +
+		 * contract.getTemplate()); reqBodyObj.put("TemplateName",
+		 * contract.getTemplate()); } else {
+		 * logger.debug("Doc Genetration: gotRequest"); HttpResponse httpResponse2 = new
+		 * BasicHttpResponse(null, counter, "NoTemplateFound");
+		 * httpResponse2.setHeader("msg", "NoTemplateFound"); return httpResponse2; //
+		 * reqBodyObj.put("TemplateName", "AmRest Kávézó Kft_40H"); }
+		 */
+		// Changed the above check to the following change based on new Template Tables.
+		if (docTemplatesService.findById(templateID).size() == 0) {
 			logger.debug("Doc Genetration: gotRequest");
-			HttpResponse httpResponse = new BasicHttpResponse(null, counter, "NoTemplateFound");
-			httpResponse.setHeader("msg", "NoTemplateFound");
-			return httpResponse;
-			// reqBodyObj.put("TemplateName", "AmRest Kávézó Kft_40H");
+			HttpResponse httpResponse2 = new BasicHttpResponse(null, counter, "NoTemplateFound");
+			httpResponse2.setHeader("msg", "NoTemplateFound");
+			return httpResponse2;
 		}
 
 		reqBodyObj.put("CompanyCode", company);
@@ -2175,41 +2228,156 @@ public class PreHireManagerController {
 		reqBodyObj.put("AffectedHrisId", reqObject.getJSONObject("PerPerson").getString("personIdExternal"));
 		reqBodyObj.put("HrisId", loggedInUser);
 
-		JSONArray parameters = getReqBodyObj(reqBodyObj, reqObject);
+		JSONArray parameters = getReqBodyObj(reqBodyObj, reqObject, templateID);
 		reqBodyObj.put("parameters", parameters);
 		timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+		generateDoc(parameters, templateID, true, httpResponse);
 
-		logger.debug("before Call doc generation" + reqBodyObj.toString());
-		logger.debug("Timestamp" + timeStamp);
+		logger.debug("Doc Genetration: gotRequest");
+		HttpResponse httpResponse2 = new BasicHttpResponse(null, counter, "Success");
+		httpResponse2.setHeader("msg", "Done");
+		return httpResponse2;
+	}
 
-		DestinationClient docDestination = new DestinationClient();
-		docDestination.setDestName(docdestinationName);
-		docDestination.setHeaderProvider();
-		docDestination.setConfiguration();
-		docDestination.setDestConfiguration();
-		docDestination.setHeaders(docDestination.getDestProperty("Authentication"));
+	private String generateDoc(JSONArray requestTagsArray, String templateId, Boolean inPDF,
+			HttpServletResponse response) throws IOException, XmlException {
 
-		logger.debug("reqBodyObj" + reqBodyObj.toString());
-		// HttpResponse docResponse = docDestination.callDestinationPOST("", "",
-		// reqBodyObj.toString());
-		ConnectivityConfiguration configuration;
-		configuration = (ConnectivityConfiguration) ctx.lookup("java:comp/env/connectivityConfiguration");
-		DestinationConfiguration docGenDestination = configuration.getConfiguration(docGenDestinationName);
-		logger.debug("setting docGenDestination: " + docGenDestination);
-		GenerateDocConnection generateDocConnection = new GenerateDocConnection();
-		generateDocConnection.setDestination(docGenDestination);
+		DocTemplates docTemplate = docTemplatesService.findById(templateId).get(0);// Template saved in DB
+		InputStream inputStream = new ByteArrayInputStream(docTemplate.getTemplate()); // creating input-stream
+																						// from
+																						// template to create docx
+																						// file
+		XWPFDocument doc = new XWPFDocument(inputStream);
 
-		HttpResponse docResponse = generateDocConnection.callDestinationPOST(reqBodyObj.toString());
+		replaceTags(doc, requestTagsArray); // Replace Tags in the doc
 
-		timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-		logger.debug("After doc generation" + timeStamp);
+		Random random = new Random(); // to generate a random fileName
+		int randomNumber = random.nextInt(987656554);
+		FileOutputStream fileOutputStream = new FileOutputStream("GeneratedDoc_" + randomNumber); // Temp location
 
-		return docResponse;
+		if (!inPDF) {
+			doc.write(fileOutputStream);// writing the updated Template to FileOutputStream // to save file
+			byte[] encoded = Files.readAllBytes(Paths.get("GeneratedDoc_" + randomNumber)); // reading the file
+																							// generated from
+																							// fileOutputStream
+			InputStream convertedInputStream = new ByteArrayInputStream(encoded);
+			response.setContentType("application/msword");
+			response.addHeader("Content-Disposition", "attachment; filename=" + "GeneratedDoc-" + ".docx"); // format
+																											// is //
+																											// important
+			IOUtils.copy(convertedInputStream, response.getOutputStream());
+		} else {
+			PdfOptions options = PdfOptions.create().fontEncoding("windows-1250");
+			PdfConverter.getInstance().convert(doc, fileOutputStream, options);
+			byte[] encoded = Files.readAllBytes(Paths.get("GeneratedDoc_" + randomNumber)); // reading the file
+																							// generated from
+																							// fileOutputStream
+			InputStream convertedInputStream = new ByteArrayInputStream(encoded);
+			response.setContentType("application/pdf");
+			response.addHeader("Content-Disposition", "attachment; filename=" + "GeneratedDoc-" + ".pdf"); // format
+																											// is
+																											// important
 
+			IOUtils.copy(convertedInputStream, response.getOutputStream());
+		}
+		response.flushBuffer();
+
+		return "Done!";
+	}
+
+	private void replaceTags(XWPFDocument doc, JSONArray requestTagsArray) throws IOException, XmlException {
+		// To replace Tags
+		replaceParagraphTags(doc.getParagraphs(), requestTagsArray);
+		replaceTableTags(doc.getTables(), requestTagsArray);
+		replaceHeaderFooterTags(doc, requestTagsArray);
+	}
+
+	private void replaceHeaderFooterTags(XWPFDocument doc, JSONArray requestTagsArray)
+			throws IOException, XmlException {
+		// To replace Header and Footer Tags
+		XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(doc);
+
+		// processing default Header
+		XWPFHeader header = policy.getDefaultHeader();
+		if (header != null) {
+			replaceParagraphTags(header.getParagraphs(), requestTagsArray);
+			replaceTableTags(header.getTables(), requestTagsArray);
+		}
+		// processing default footer
+		XWPFFooter footer = policy.getDefaultFooter();
+		if (footer != null) {
+			replaceParagraphTags(footer.getParagraphs(), requestTagsArray);
+			replaceTableTags(footer.getTables(), requestTagsArray);
+		}
+		// Processing Header and Footer of each page (In case there is of different
+		// Header and Footer are set for each page)
+		int numberOfPages = doc.getProperties().getExtendedProperties().getUnderlyingProperties().getPages();
+		for (int i = 0; i < numberOfPages; i++) {
+			// processing headers
+			header = policy.getHeader(i);
+			if (header != null) {
+				replaceParagraphTags(header.getParagraphs(), requestTagsArray);
+				replaceTableTags(header.getTables(), requestTagsArray);
+			}
+			// processing footers
+			footer = policy.getFooter(i);
+			if (footer != null) {
+				replaceParagraphTags(footer.getParagraphs(), requestTagsArray);
+				replaceTableTags(footer.getTables(), requestTagsArray);
+			}
+		}
+	}
+
+	private void replaceParagraphTags(List<XWPFParagraph> paragraphs, JSONArray requestTagsArray) {
+		// To replace Tags in Paragraphs
+		List<XWPFRun> runs;
+		String text;
+		JSONObject tagObject;
+		for (XWPFParagraph p : paragraphs) {
+			runs = p.getRuns();
+			if (runs != null) {
+				for (XWPFRun r : runs) {
+					text = r.getText(0);
+					System.out.println(text);
+					for (int i = 0; i < requestTagsArray.length(); i++) {
+						tagObject = requestTagsArray.getJSONObject(i);
+						if (text != null && text.contains(tagObject.getString("tag"))) {
+							text = text.replace(tagObject.getString("tag"), tagObject.getString("value"));// replacing
+																											// tag
+																											// key
+																											// with
+																											// tag
+																											// value
+							r.setText(text, 0); // setting The text to 'run' in the same document
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private void replaceTableTags(List<XWPFTable> tables, JSONArray requestTagsArray) {
+		// To replace Tags in Tables
+		for (XWPFTable xwpfTable : tables) {
+			List<XWPFTableRow> row = xwpfTable.getRows();
+			for (XWPFTableRow xwpfTableRow : row) {
+				List<XWPFTableCell> cell = xwpfTableRow.getTableCells();
+				for (XWPFTableCell xwpfTableCell : cell) {
+					if (xwpfTableCell != null) {
+						replaceParagraphTags(xwpfTableCell.getParagraphs(), requestTagsArray);
+						List<XWPFTable> internalTables = xwpfTableCell.getTables();
+						if (internalTables.size() != 0) {
+							replaceTableTags(internalTables, requestTagsArray);
+						}
+					}
+				}
+			}
+		}
 	}
 
 	// Get Document POST Body
-	private JSONArray getReqBodyObj(JSONObject reqBodyObj, JSONObject reqObject) {
+	private JSONArray getReqBodyObj(JSONObject reqBodyObj, JSONObject reqObject, String templateId) {
+		List<DocTemplateTags> templateTags = docTemplateTagsService.findByTemplateId(templateId);
 		JSONArray parameters = new JSONArray();
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
 		String fulltimeOrPartimeEN = "";
@@ -2221,113 +2389,22 @@ public class PreHireManagerController {
 			fulltimeOrPartimeEN = "part-time";
 			fulltimeOrPartimeHU = "Részmunkaidöben";
 		}
-		parameters.put(new JSONObject().put("Key", "EN_CS_PERSONALINFO_LAST_NAME").put("Value",
-				reqObject.getJSONObject("PerPersonal").getString("lastName")));
-		parameters.put(new JSONObject().put("Key", "EN_CS_PERSONALINFO_FIRST_NAME").put("Value",
-				reqObject.getJSONObject("PerPersonal").getString("firstName")));
 
-		parameters.put(new JSONObject().put("Key", "EN_CS_CUST_ADDITIONAL_INFORMATION_CUST_MUNAM").put("Value",
-				reqObject.has("cust_Additional_Information")
-						? String.valueOf(reqObject.getJSONObject("cust_Additional_Information").get("cust_MUNAM"))
-								.equalsIgnoreCase("null") ? ""
-										: reqObject.getJSONObject("cust_Additional_Information").getString("cust_MUNAM")
-						: ""));
-
-		parameters.put(new JSONObject().put("Key", "EN_CS_CUST_ADDITIONAL_INFORMATION_CUST_STRNR").put("Value",
-				reqObject.has("cust_Additional_Information")
-						? String.valueOf(reqObject.getJSONObject("cust_Additional_Information").get("cust_MUVOR"))
-								.equalsIgnoreCase("null") ? ""
-										: reqObject.getJSONObject("cust_Additional_Information").getString("cust_STRNR")
-						: ""));
-		String sDateString = reqObject.getJSONObject("EmpJob").getString("startDate");
-		// sDateString = sDateString.substring(sDateString.indexOf("(") + 1,
-		// sDateString.indexOf(")"));
-		// Date sDate = new Date(Long.parseLong(sDateString));
-		logger.debug("EN_CS_EMPLOYMENTDETAILS_HIRE_DATE" + sDateString);
-		parameters.put(new JSONObject().put("Key", "EN_CS_EMPLOYMENTDETAILS_HIRE_DATE").put("Value",
-				formatDate(sDateString, Locale.US, false)));
-		logger.debug("reqObject" + reqObject.getJSONObject("EmpJob").toString());
-
-		parameters.put(new JSONObject().put("Key", "EN_CS_PAYCOMPONENTRECURRING_P02HU_0010_PAYCOMPVALUE").put("Value",
-				reqObject.has("EmpPayCompRecurring")
-						? String.valueOf(reqObject.getJSONObject("EmpPayCompRecurring").get("paycompvalue"))
-								.equalsIgnoreCase("null") ? ""
-										: reqObject.getJSONObject("EmpPayCompRecurring").getString("paycompvalue")
-						: ""));
-
-//		JSONArray propertiesADDRESS8 = new JSONArray(
-//				"[\"PerAddressDEFLT/address1\",\"PerAddressDEFLT/address6\",\"PerAddressDEFLT/address5\",\"PerAddressDEFLT/address4\",\"PerAddressDEFLT/address3\",\"PerAddressDEFLT/address2\",\"PerAddressDEFLT/address7\"]");
-		// JSONArray propertiesADDRESS8 = new
-		// JSONArray("[\"PerAddressDEFLT/zipCode\",\"PerAddressDEFLT/city\"]");
-		JSONArray propertiesADDRESS8 = new JSONArray(
-				"[\"PerAddressDEFLT/zipCode~ \",\"PerAddressDEFLT/city~, \",\"PerAddressDEFLT/address8~ \",\"PerAddressDEFLT{/address9Nav{/picklistLabels[/results?locale=User.defaultLocale:label~ \",\"PerAddressDEFLT/address2~. \",\"PerAddressDEFLT/address3~\"]");
-		/*
-		 * JSONArray propertiesADDRESS2 = new JSONArray("[\"PerAddressDEFLT/address8\""
-		 * +
-		 * ",\"PerAddressDEFLT{/address9Nav{/picklistLabels[/results?locale=User.defaultLocale:label\""
-		 * +
-		 * ",\"PerAddressDEFLT/city\",\"PerAddressDEFLT/county\",\"PerAddressDEFLT/zipCode\","
-		 * + "\"PerAddressDEFLT{" + "/countryNav/territoryName\"]");
-		 */
-		JSONArray propertiesADDRESS2 = new JSONArray("[\"PerAddressDEFLT/address4~, \","
-				+ "\"PerAddressDEFLT/address5~>\"," + "\"PerAddressDEFLT/address6~ \"]");
-		parameters.put(new JSONObject().put("Key", "EN_CS_HUN_HOMEADDRESS_ADDRESS8").put("Value",
-				getValuesDynamically(propertiesADDRESS8, reqObject)));
-		parameters.put(new JSONObject().put("Key", "EN_CS_HUN_HOMEADDRESS_ADDRESS2").put("Value",
-				getValuesDynamically(propertiesADDRESS2, reqObject)));
-		parameters.put(new JSONObject().put("Key", "EN_CS_JOBINFO_CONTRACT_END_DATE").put("Value",
-				String.valueOf(reqObject.getJSONObject("EmpJob").get("contractEndDate")).equalsIgnoreCase("null") ? ""
-						: formatDate(reqObject.getJSONObject("EmpJob").getString("contractEndDate"), Locale.US,
-								false)));// Check for contractEndDate
-		// this
-		parameters.put(new JSONObject().put("Key", "EN_CS_CALC3_FT_PT").put("Value", fulltimeOrPartimeEN));
-		parameters.put(new JSONObject().put("Key", "HU_CS_CALC3_FT_PT").put("Value", fulltimeOrPartimeHU));
-		parameters.put(new JSONObject().put("Key", "EN_CS_CALC4_DAILY_HOURS").put("Value",
-				reqObject.getJSONObject("EmpJob").getInt("standardHours") / 5));
-		logger.debug("HU_CS_EMPLOYMENTDETAILS_HIRE_DATE" + sDateString);
-		parameters.put(new JSONObject().put("Key", "HU_CS_EMPLOYMENTDETAILS_HIRE_DATE").put("Value",
-				formatDate(sDateString, "HUN", true)));
-		parameters.put(new JSONObject().put("Key", "HU_CS_JOBINFO_CONTRACT_END_DATE").put("Value",
-				String.valueOf(reqObject.getJSONObject("EmpJob").get("contractEndDate")).equalsIgnoreCase("null") ? ""
-						: formatDate(reqObject.getJSONObject("EmpJob").getString("contractEndDate"), "HUN", true)));// Check
-		parameters.put(new JSONObject().put("Key", "EN_CS_CALC5_LAST_DAY_YEAR_PLUS1").put("Value",
-
-				formatLastYearDay(sDateString, Locale.US, false))); // contractEndDate
-
-		parameters.put(new JSONObject().put("Key", "HU_CS_CALC5_LAST_DAY_YEAR_PLUS1").put("Value",
-
-				formatLastYearDay(sDateString, "HUN", true)));
-		parameters.put(new JSONObject().put("Key", "EN_CS_CALC1_QRTR_END_DATE").put("Value",
-				calcQuarterDateYear(sDateString, Locale.ENGLISH, false)));
-		parameters.put(new JSONObject().put("Key", "HU_CS_CALC1_QRTR_END_DATE").put("Value",
-				calcQuarterDateYear(sDateString, "HUN", true)));
-		parameters.put(new JSONObject().put("Key", "EN_CS_CUST_ADDITIONAL_INFORMATION_CUST_MUVOR").put("Value",
-				reqObject.has("cust_Additional_Information")
-						? String.valueOf(reqObject.getJSONObject("cust_Additional_Information").get("cust_MUVOR"))
-								.equalsIgnoreCase("null") ? ""
-										: reqObject.getJSONObject("cust_Additional_Information").getString("cust_MUVOR")
-						: ""));
-
-//		logger.debug("reqObject.getJSONObject(\"EmpJob\").has(\"positionNav\"): "
-//				+ reqObject.getJSONObject("EmpJob").has("positionNav"));
-//		logger.debug(
-//				"reqObject.getJSONObject(\"EmpJob\").getJSONObject(\"positionNav\").has(\"externalName_localized\"): "
-//						+ reqObject.getJSONObject("EmpJob").getJSONObject("positionNav").has("externalName_localized"));
-//		logger.debug("String.valueOf(reqObject.getJSONObject(\"EmpJob\").getJSONObject(\"positionNav\")\r\n"
-//				+ "										.get(\"externalName_localized\")).equalsIgnoreCase(\"null\"): "
-//				+ String.valueOf(
-//						reqObject.getJSONObject("EmpJob").getJSONObject("positionNav").get("externalName_localized"))
-//						.equalsIgnoreCase("null"));
-		parameters.put(new JSONObject().put("Key", "EN_CS_JOBINFO_JOB_TITLE").put("Value",
-				reqObject.getJSONObject("EmpJob").has("positionNav")
-						? reqObject.getJSONObject("EmpJob").getJSONObject("positionNav").has("externalName_localized")
-								? String.valueOf(reqObject.getJSONObject("EmpJob").getJSONObject("positionNav")
-										.get("externalName_localized")).equalsIgnoreCase("null")
-												? ""
-												: reqObject.getJSONObject("EmpJob").getJSONObject("positionNav")
-														.getString("externalName_localized")
-								: ""
-						: ""));
+		String tag;
+		String entity;
+		String field;
+		for (int i = 0; i < templateTags.size(); i++) {
+			tag = templateTags.get(i).getTag();
+			entity = templateTags.get(i).getEntity();
+			field = templateTags.get(i).getFieldName();
+			parameters
+					.put(new JSONObject().put("tag", tag).put("value",
+							reqObject.has(entity)
+									? String.valueOf(reqObject.getJSONObject(entity).get(field)).equalsIgnoreCase(
+											"null") ? "" : reqObject.getJSONObject(entity).getString(field)
+									: ""));
+		}
+		logger.debug("parameters:" + parameters.toString());
 		return parameters;
 	}
 
