@@ -1818,12 +1818,11 @@ public class PreHireManagerController {
 			entityMap.put("PerPersonal", "?$filter=personIdExternal eq '" + map.get("userId") + "'&fromDate="
 					+ dateString
 					+ "&$format=json&$select=startDate,personIdExternal,birthName,initials,maritalStatus,certificateStartDate,namePrefix,salutation,nativePreferredLang,since,gender,lastName,nameFormat,firstName,certificateEndDate,preferredName,secondNationality,formalName,nationality");
-			/*
-			 * entityMap.put("PerAddressDEFLT", "?$filter=personIdExternal eq '" +
-			 * map.get("userId") + "'&fromDate=" + dateString +
-			 * "&$format=json&$expand=address9Nav/picklistLabels,countryNav&$select=startDate,personIdExternal,addressType,address1,address2,address3,city,zipCode,country,address7,address6,address5,address4,county,address9,address8,address9Nav/picklistLabels/label,address9Nav/picklistLabels/locale,countryNav/territoryName"
-			 * );
-			 */
+
+			entityMap.put("PerAddressDEFLT", "?$filter=personIdExternal eq '" + map.get("userId") + "'&fromDate="
+					+ dateString
+					+ "&$format=json&$expand=countryNav&$select=startDate,personIdExternal,addressType,address1,address2,address3,city,zipCode,country,address7,address6,address5,address4,county,address9,address8,countryNav/territoryName");
+
 			entityMap.put("EmpJob", "?$filter=userId eq '" + map.get("userId") + "'&fromDate=" + dateString
 					+ "&$format=json&$expand=positionNav/companyNav,positionNav&$select=positionNav/companyNav/country,jobTitle,startDate,userId,jobCode,employmentType,workscheduleCode,division,standardHours,costCenter,payGrade,department,timeTypeProfileCode,businessUnit,managerId,position,employeeClass,countryOfCompany,location,holidayCalendarCode,company,eventReason,contractEndDate,contractType,positionNav/externalName_localized");
 			entityMap.put("PerPerson", "?$filter=personIdExternal  eq '" + map.get("userId") + "'&fromDate="
@@ -2393,6 +2392,7 @@ public class PreHireManagerController {
 		String tag;
 		String entity;
 		String field;
+		logger.debug("templateTags.size(): " + templateTags.size());
 		for (int i = 0; i < templateTags.size(); i++) {
 			tag = templateTags.get(i).getTag();
 			entity = templateTags.get(i).getEntity();

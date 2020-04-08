@@ -8,6 +8,7 @@ C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fa
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\controller\PerEmail.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\model\FieldGroupText.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\controller\WorkScheduleController.java
+C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\model\DocTemplateDetails.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\controller\Sample.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\SF\PexClient.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\controller\EmpPayCompRecurring.java
@@ -40,6 +41,7 @@ C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fa
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\Application.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\ContractCriteriaService.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\authentication\BasicAuthenticationHeaderProvider.java
+C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\DocTemplateDetailsServiceImp.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\model\FieldText.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\POJO\FieldGroup.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\BusinessUnitService.java
@@ -47,7 +49,6 @@ C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fa
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\controller\SCPOperations.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\connections\GenerateDocConnection.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\controller\EmailTypeController.java
-C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\controller\Initial_SF_PEX.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\CountryService.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\model\FieldDataFromSystem.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\controller\ISOCountryController.java
@@ -80,10 +81,13 @@ C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fa
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\connections\GetProxy.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\model\ContractCriteria.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\MapTemplateFieldPropertiesService.java
+C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\DocTemplateDetailsService.java
+C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\DocTemplateTagsServiceImp.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\FieldService.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\MapTemplateFieldGroupService.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\ContractServiceImp.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\utilities\DropDownKeyValue.java
+C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\DocTemplateTagsService.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\utility\GetDestinationClient.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\model\MapTemplateFieldGroup.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\controller\CurrencyController.java
@@ -97,10 +101,12 @@ C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\co
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\config\DBConfiguration.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\TemplateServiceImp.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\TemplateService.java
+C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\model\DocTemplateTags.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\SF\UrlClient.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\MapTemplateFieldGroupServiceImp.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\controller\EmpJob.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\controller\OngoingHiring.java
+C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\model\DocTemplates.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\connection\DestinationClient.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\model\MapCountryBusinessUnitTemplate.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\FieldGroupTextServiceImp.java
@@ -117,6 +123,7 @@ C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fa
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\utility\CommonFunctions.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\POJO\Field.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\CountryServiceImp.java
+C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\DocTemplatesServiceImp.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\controller\CountryController.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\ConfirmStatusServiceImp.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\model\FieldGroup.java
@@ -131,6 +138,7 @@ C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fa
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\controller\TimeTypeController.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\model\MapTemplateFieldProperties.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\controller\MasterTableMaintController.java
+C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\DocTemplatesService.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\utilities\DashBoardPositionClass.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\model\CodeList.java
 C:\Users\manishg\eclipse-workspace\FastHire_POC\src\main\java\com\nga\xtendhr\fastHire\service\FieldDataFromSystemService.java

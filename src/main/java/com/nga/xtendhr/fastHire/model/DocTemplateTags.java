@@ -16,6 +16,7 @@ public class DocTemplateTags {
 	@Column(name = "\"DOC_TEMPLATE.ID\"", columnDefinition = "VARCHAR(32)")
 	private String templateId;
 
+	@Id
 	@Column(name = "\"TAG\"", columnDefinition = "VARCHAR(32)")
 	private String tag;
 

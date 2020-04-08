@@ -31,6 +31,7 @@ com\nga\xtendhr\fastHire\service\MapFieldFieldGroupServiceImp.class
 com\nga\xtendhr\fastHire\connections\HttpStatusCodes.class
 com\nga\xtendhr\fastHire\controller\UserEntity.class
 com\nga\xtendhr\fastHire\POJO\FieldGroup.class
+com\nga\xtendhr\fastHire\service\DocTemplatesServiceImp.class
 com\nga\xtendhr\fastHire\service\FieldTextService.class
 com\nga\xtendhr\fastHire\controller\PerPerson.class
 com\nga\xtendhr\fastHire\service\FieldDataFromSystemServiceImp.class
@@ -39,7 +40,6 @@ com\nga\xtendhr\fastHire\service\CodeListTextServiceImp.class
 com\nga\xtendhr\fastHire\service\MapCountryBusinessUnitTemplateService.class
 com\nga\xtendhr\connection\DestinationClient.class
 com\nga\xtendhr\fastHire\controller\HolidayCalendarController.class
-com\nga\xtendhr\controller\Initial_SF_PEX.class
 com\nga\xtendhr\fastHire\controller\FastHireCandidateController.class
 com\nga\xtendhr\fastHire\controller\ParentPosMgrController.class
 com\nga\xtendhr\fastHire\service\MapFieldFieldGroupService.class
@@ -62,6 +62,7 @@ com\nga\xtendhr\fastHire\service\ContractService.class
 com\nga\xtendhr\fastHire\model\FieldText.class
 com\nga\xtendhr\fastHire\service\CountryService.class
 com\nga\xtendhr\fastHire\controller\EmpPayCompRecurring.class
+com\nga\xtendhr\fastHire\model\DocTemplates.class
 com\nga\xtendhr\fastHire\controller\LoggedUser.class
 com\nga\xtendhr\fastHire\controller\Department_FranceController.class
 com\nga\xtendhr\fastHire\controller\FOFrequencyController.class
@@ -95,6 +96,7 @@ com\nga\xtendhr\fastHire\model\CodeListText.class
 com\nga\xtendhr\fastHire\model\MapTemplateFieldGroup.class
 com\nga\xtendhr\fastHire\connections\HttpConnectionGET.class
 com\nga\xtendhr\fastHire\controller\Language.class
+com\nga\xtendhr\fastHire\service\DocTemplateTagsService.class
 com\nga\xtendhr\fastHire\connections\GetProxy.class
 com\nga\xtendhr\fastHire\service\MapTemplateFieldGroupServiceImp.class
 com\nga\xtendhr\fastHire\service\FieldGroupServiceImp.class
@@ -105,6 +107,7 @@ com\nga\xtendhr\fastHire\service\FieldGroupService.class
 com\nga\xtendhr\fastHire\model\FieldGroupText.class
 com\nga\xtendhr\fastHire\service\MapCountryBusinessUnitTemplateServiceImp.class
 com\nga\xtendhr\fastHire\controller\VacantPositions.class
+com\nga\xtendhr\fastHire\service\DocTemplatesService.class
 com\nga\xtendhr\fastHire\controller\PositionVacancy.class
 com\nga\xtendhr\fastHire\service\ConfirmStatusServiceImp.class
 com\nga\xtendhr\fastHire\SF\PexClient.class
@@ -112,6 +115,7 @@ com\nga\xtendhr\fastHire\controller\OngoingHiring.class
 com\nga\xtendhr\fastHire\controller\PerPersonal.class
 com\nga\xtendhr\fastHire\controller\PreHireManagerController.class
 com\nga\xtendhr\fastHire\controller\PreHireManagerController$hunLocale.class
+com\nga\xtendhr\fastHire\service\DocTemplateTagsServiceImp.class
 com\nga\xtendhr\fastHire\service\ContractCriteriaServiceImp.class
 com\nga\xtendhr\fastHire\service\ContractServiceImp.class
 com\nga\xtendhr\fastHire\model\BusinessUnit.class
@@ -123,18 +127,22 @@ com\nga\xtendhr\fastHire\POJO\Detail.class
 com\nga\xtendhr\fastHire\controller\SalutationPicklistController.class
 com\nga\xtendhr\fastHire\service\FieldTextServiceImp.class
 com\nga\xtendhr\fastHire\controller\PaymentInfoController.class
+com\nga\xtendhr\fastHire\model\DocTemplateTags.class
 com\nga\xtendhr\fastHire\SF\UrlClient.class
 com\nga\xtendhr\fastHire\service\MapCountryBusinessUnitService.class
 com\nga\xtendhr\fastHire\service\CodeListService.class
 com\nga\xtendhr\fastHire\model\SFConstants.class
+com\nga\xtendhr\fastHire\model\DocTemplateDetails.class
 com\nga\xtendhr\fastHire\service\FieldServiceImp.class
 com\nga\xtendhr\fastHire\controller\EmpJob.class
 com\nga\xtendhr\fastHire\service\SFAPIService.class
+com\nga\xtendhr\fastHire\service\DocTemplateDetailsService.class
 com\nga\xtendhr\fastHire\utilities\ExtractProperties.class
 com\nga\xtendhr\fastHire\controller\ISOCountryController.class
 com\nga\xtendhr\fastHire\controller\CustPersonIdGen.class
 com\nga\xtendhr\fastHire\controller\AppConfigurationController.class
 com\nga\xtendhr\fastHire\model\MapTemplateFieldProperties.class
+com\nga\xtendhr\fastHire\service\DocTemplateDetailsServiceImp.class
 com\nga\xtendhr\fastHire\authentication\BasicAuthenticationHeaderProvider.class
 com\nga\xtendhr\fastHire\controller\CountryController.class
 com\nga\xtendhr\fastHire\service\ContractCriteriaService.class
