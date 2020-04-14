@@ -1,4 +1,3 @@
-com\nga\xtendhr\config\DBConfiguration.class
 com\nga\xtendhr\fastHire\connections\GenerateDocConnection.class
 com\nga\xtendhr\fastHire\utilities\ExceptionHandlers.class
 com\nga\xtendhr\fastHire\controller\MaritalStatusController.class
@@ -7,7 +6,6 @@ com\nga\xtendhr\fastHire\model\MapCountryBusinessUnitTemplate.class
 com\nga\xtendhr\fastHire\service\BusinessUnitServiceImp.class
 com\nga\xtendhr\fastHire\connections\POJO\CustomStatus.class
 com\nga\xtendhr\fastHire\service\MapTemplateFieldPropertiesService.class
-com\nga\xtendhr\utility\ErrorHandlerController.class
 com\nga\xtendhr\fastHire\connections\HttpConnectionPOST.class
 com\nga\xtendhr\Application.class
 com\nga\xtendhr\fastHire\POJO\Field_.class
@@ -21,7 +19,6 @@ com\nga\xtendhr\fastHire\service\CodeListServiceImp.class
 com\nga\xtendhr\fastHire\controller\PreHireManagerController$1.class
 com\nga\xtendhr\fastHire\connections\HttpConnectionPUT.class
 com\nga\xtendhr\fastHire\service\MapCountryBusinessUnitServiceImp.class
-com\nga\xtendhr\utility\GetDestinationClient.class
 com\nga\xtendhr\fastHire\POJO\Field.class
 com\nga\xtendhr\fastHire\service\MapTemplateFieldPropertiesServiceImp.class
 com\nga\xtendhr\fastHire\controller\BankController.class
@@ -38,7 +35,6 @@ com\nga\xtendhr\fastHire\service\FieldDataFromSystemServiceImp.class
 com\nga\xtendhr\fastHire\SF\DestinationClient.class
 com\nga\xtendhr\fastHire\service\CodeListTextServiceImp.class
 com\nga\xtendhr\fastHire\service\MapCountryBusinessUnitTemplateService.class
-com\nga\xtendhr\connection\DestinationClient.class
 com\nga\xtendhr\fastHire\controller\HolidayCalendarController.class
 com\nga\xtendhr\fastHire\controller\FastHireCandidateController.class
 com\nga\xtendhr\fastHire\controller\ParentPosMgrController.class
@@ -76,7 +72,6 @@ com\nga\xtendhr\fastHire\service\FieldDataFromSystemService.class
 com\nga\xtendhr\fastHire\model\ConfirmStatus.class
 com\nga\xtendhr\fastHire\service\SFAPIServiceImp.class
 com\nga\xtendhr\fastHire\controller\PreHireManagerController$2.class
-com\nga\xtendhr\connection\BatchRequest.class
 com\nga\xtendhr\fastHire\service\FieldGroupTextService.class
 com\nga\xtendhr\fastHire\service\TemplateServiceImp.class
 com\nga\xtendhr\fastHire\service\CodeListTextService.class
@@ -88,9 +83,7 @@ com\nga\xtendhr\fastHire\controller\Region_PolandController.class
 com\nga\xtendhr\fastHire\controller\PayComponentController.class
 com\nga\xtendhr\fastHire\model\Template.class
 com\nga\xtendhr\fastHire\service\SFConstantsService.class
-com\nga\xtendhr\controller\ApplicationTest.class
 com\nga\xtendhr\fastHire\controller\CurrencyController.class
-com\nga\xtendhr\utility\CommonFunctions.class
 com\nga\xtendhr\fastHire\service\BusinessUnitService.class
 com\nga\xtendhr\fastHire\model\CodeListText.class
 com\nga\xtendhr\fastHire\model\MapTemplateFieldGroup.class
