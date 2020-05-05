@@ -36,7 +36,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -1867,24 +1866,10 @@ public class PreHireManagerController {
 			HttpResponse response = generateDoc(docGenerationObject.toString(), loggedInUser, httpResponse);
 			String msg = response.getAllHeaders()[0].getValue();
 			if (response != null && !msg.equals("NoTemplateFound")) {
-				if (response.getStatusLine().getStatusCode() == 200) {
-					String docGenerationResponseJsonString = EntityUtils.toString(response.getEntity(), "UTF-8");
-//			  String stringBody = response.getBody();
-					logger.debug("docGenerationResponseJsonString: " + docGenerationResponseJsonString);
-					JSONObject docJson = new JSONObject(docGenerationResponseJsonString);
-					if (docJson.getString("status").equalsIgnoreCase("SUCCESS")) {
-						logger.debug("docJson.document " + docJson.getString("document"));
-						byte[] decodedString = Base64
-								.decodeBase64(new String(docJson.getString("document")).getBytes("UTF-8"));
-						mdfPostStatus = postPersonStatusMDF(destClient, personId, "doc", "SUCCESS", null);
-						logger.debug("MDF POst 10 status: " + mdfPostStatus);
-						return ResponseEntity.ok().body(decodedString);
-//				 logger.debug("bytes " + decodedString);
-					} else {
-						mdfPostStatus = postPersonStatusMDF(destClient, personId, "doc", "FAILED", null);
-						logger.debug("MDF POst 11 status: " + mdfPostStatus);
-					}
-
+				if (msg.equals("Success")) {
+					mdfPostStatus = postPersonStatusMDF(destClient, personId, "doc", "SUCCESS", null);
+					logger.debug("MDF POst 10 status: " + mdfPostStatus);
+					return ResponseEntity.ok().body("Success!");
 				} else {
 					mdfPostStatus = postPersonStatusMDF(destClient, personId, "doc", "FAILED", null);
 					logger.debug("MDF POst 12 status: " + mdfPostStatus);
@@ -2230,11 +2215,17 @@ public class PreHireManagerController {
 		JSONArray parameters = getReqBodyObj(reqBodyObj, reqObject, templateID);
 		reqBodyObj.put("parameters", parameters);
 		timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-		generateDoc(parameters, templateID, true, httpResponse);
-
-		logger.debug("Doc Genetration: gotRequest");
-		HttpResponse httpResponse2 = new BasicHttpResponse(null, counter, "Success");
-		httpResponse2.setHeader("msg", "Done");
+		String status = generateDoc(parameters, templateID, true, httpResponse);
+		HttpResponse httpResponse2;
+		if (status.equals("Done")) {
+			logger.debug("Doc Genetration: In Success...");
+			httpResponse2 = new BasicHttpResponse(null, counter, "Success");
+			httpResponse2.setHeader("msg", "Success");
+		} else {
+			logger.debug("Doc Genetration: In Error...");
+			httpResponse2 = new BasicHttpResponse(null, counter, "Error");
+			httpResponse2.setHeader("msg", "Error");
+		}
 		return httpResponse2;
 	}
 
@@ -2281,7 +2272,7 @@ public class PreHireManagerController {
 		}
 		response.flushBuffer();
 
-		return "Done!";
+		return "Done";
 	}
 
 	private void replaceTags(XWPFDocument doc, JSONArray requestTagsArray) throws IOException, XmlException {
